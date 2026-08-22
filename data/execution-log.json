@@ -1,0 +1,7 @@
+{
+  "version":"0.1",
+  "updated":"2026-08-22",
+  "entries":[],
+  "schema":{"id":"unique execution id","createdAt":"ISO timestamp","command":"owner command","intent":"classified intent","decision":"JODA decision","status":"proposed|approved|executed|blocked|completed","result":"outcome","evidence":"measurable evidence","effort":"time/cost estimate","lesson":"learning for next cycle"},
+  "policy":"Only approved, non-sensitive execution may be marked executed. External side effects and production changes require explicit owner approval."
+}
