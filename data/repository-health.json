@@ -1,0 +1,13 @@
+{
+  "scan":"2026-08-22",
+  "method":"GitHub recent-commit scan",
+  "projects":[
+    {"repo":"juda2018-del/suqly-ai","activity":"hot","lastCommit":"cbce26b054938f0530c52e7d0df9543f965276c4","signal":"active development","priority":"high"},
+    {"repo":"juda2018-del/juda-food-app","activity":"recent","lastCommit":"1c22a6f4be760981bc55983d292829f5bb48aed8","signal":"recent UI work","priority":"high"},
+    {"repo":"juda2018-del/jardak-ai","activity":"stale","lastCommit":"86ad876a7271eca96c6b0aa6d8621fdb179762bc","signal":"mobile/CI work needs verification","priority":"high"},
+    {"repo":"juda2018-del/fancy-hub-app","activity":"unknown","signal":"no recent commit returned in current scan","priority":"medium"},
+    {"repo":"juda2018-del/jeel-tech-website","activity":"unknown","signal":"no recent commit returned in current scan","priority":"medium"},
+    {"repo":"juda2018-del/madrasati-app","activity":"unknown","signal":"no recent commit returned in current scan","priority":"medium"}
+  ],
+  "ciNote":"No workflow runs were returned for the inspected commits; this is not proof that CI is absent."
+}
