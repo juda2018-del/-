@@ -1,0 +1,20 @@
+{
+  "version":"0.2",
+  "updated":"2026-08-22",
+  "mission":"Maximize the owner's long-term portfolio value by finding opportunities, improving existing products, building validated companies and allocating attention intelligently.",
+  "dailyLoop":["observe","score","decide","plan","execute-approved-actions","measure","learn"],
+  "inputs":["portfolio","repository-health","decision-engine","opportunity-pipeline","company-builder","capital-exit-engine","weekly-board","execution-queue","operational-memory"],
+  "today":{
+    "primaryDecision":"Focus on Suqly growth while clearing FUSE launch blockers and validating Jardak with a real pilot.",
+    "why":"These three have the strongest combination of progress, commercial upside and near-term evidence potential.",
+    "actions":[
+      {"project":"Suqly AI","action":"define one measurable 14-day acquisition experiment","expected":"new paid customers and retention evidence","approval":"required for paid spend"},
+      {"project":"FUSE Iraq","action":"clear iPhone UX blockers and run end-to-end order test","expected":"release readiness evidence","approval":"required before production release"},
+      {"project":"Jardak AI","action":"prepare 3-store pilot plan and success criteria","expected":"real-world demand and accuracy evidence","approval":"required before external commitment"}
+    ],
+    "deprioritize":["large new builds without validation","unmeasured feature expansion","irreversible changes"],
+    "reviewAt":"next weekly board"
+  },
+  "autonomy":"JODA may analyze, prioritize, draft plans and prepare code/tasks. Financial commitments, contracts, external messages, production releases, destructive operations and account/security changes require explicit owner approval.",
+  "learningRule":"Every completed action should record outcome, evidence, cost/effort and lesson before the next scoring cycle."
+}
