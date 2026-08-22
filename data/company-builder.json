@@ -1,0 +1,40 @@
+{
+  "updated":"2026-08-22",
+  "builderVersion":"0.1",
+  "template":{"stages":["thesis","validation","MVP","pilot","growth","scale","exit"],"gates":["demand","feasibility","unit-economics","retention"]},
+  "companies":[
+    {
+      "id":"joda-growth-operator",
+      "workingName":"JODA Growth Operator",
+      "sourceOpportunity":"AI Growth Operator for Iraqi SMBs",
+      "thesis":"An AI-assisted growth operating service that plans campaigns, content, lead follow-up and reporting for small businesses.",
+      "customer":"Iraqi SMBs that need marketing execution but cannot justify a full internal team",
+      "businessModel":"monthly subscription + managed-service tier",
+      "mvp":["business onboarding","AI campaign planner","content calendar","lead follow-up workspace","weekly ROI report"],
+      "validation":["10 customer interviews","3 paid pilots","measure lead-to-sale improvement"],
+      "pricingHypothesis":["Starter: $29/mo","Growth: $79/mo","Managed: $199+/mo"],
+      "launchPlan":["landing page","outbound to 50 qualified businesses","3 paid pilots","case study","repeatable acquisition channel"],
+      "successMetrics":["paid pilots >=3","activation >=60%","month-2 retention >=60%","gross margin target >=60%"],
+      "exitOptions":["keep as recurring SaaS","sell niche SaaS","merge into Jeel Tech venture portfolio"],
+      "stage":"validation",
+      "ownerApprovalRequired":true
+    },
+    {
+      "id":"jardak-retail-intelligence",
+      "workingName":"Jardak Retail Intelligence",
+      "sourceOpportunity":"Jardak Retail Intelligence",
+      "thesis":"Turn video-based inventory capture into recurring retail intelligence and shrinkage/availability insights.",
+      "customer":"small and mid-sized retailers",
+      "businessModel":"per-store monthly subscription + setup",
+      "mvp":["video upload","item/stock recognition","inventory report","low-stock alerts","store dashboard"],
+      "validation":["3-store pilot","compare manual vs AI counting time","measure stockout detection accuracy"],
+      "pricingHypothesis":["Pilot: $49/store/mo","Pro: $99/store/mo","Multi-store: custom"],
+      "launchPlan":["pilot stores","accuracy benchmark","case study","retail partnerships"],
+      "successMetrics":["counting time reduction >=50%","accuracy >=90% on target SKUs","3 paying stores"],
+      "exitOptions":["scale as SaaS","sell to retail-tech operator","license technology"],
+      "stage":"validation",
+      "ownerApprovalRequired":true
+    }
+  ],
+  "rule":"JODA can design and prepare companies autonomously, but cannot commit money, contracts, external publishing or irreversible production actions without explicit owner approval."
+}
