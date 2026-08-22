@@ -1,0 +1,10 @@
+{
+  "owner": "Mustafa",
+  "projects": [
+    {"id":"fuse","name":"FUSE Iraq","type":"Food / Delivery","status":"operating","progress":78,"priority":"high","next":"iPhone UX fixes and launch readiness"},
+    {"id":"suqly","name":"Suqly AI","type":"AI SaaS","status":"operating","progress":88,"priority":"high","next":"growth and customer acquisition"},
+    {"id":"fancy","name":"Fancy Hub","type":"E-commerce","status":"development","progress":64,"priority":"medium","next":"store launch and conversion UX"},
+    {"id":"jardak","name":"Jardak AI","type":"Retail AI","status":"development","progress":72,"priority":"high","next":"mobile release and production hardening"},
+    {"id":"jazal","name":"JAZAL","type":"Audio / Media","status":"operating","progress":81,"priority":"medium","next":"content growth and monetization"}
+  ]
+}
