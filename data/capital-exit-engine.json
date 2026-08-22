@@ -1,0 +1,16 @@
+{
+  "updated":"2026-08-22",
+  "version":"0.1",
+  "decisionModel":{"returnPotential":0.30,"traction":0.20,"readiness":0.15,"strategicFit":0.15,"capitalEfficiency":0.10,"riskPenalty":0.10},
+  "portfolio":[
+    {"project":"Suqly AI","strategy":"HOLD + GROW","score":88,"rationale":"highest near-term revenue leverage; prioritize acquisition and retention before considering exit","next":"run a 14-day paid-growth experiment"},
+    {"project":"FUSE Iraq","strategy":"HOLD + LAUNCH","score":85,"rationale":"launch readiness has more value than an early sale","next":"remove release blockers and validate operating economics"},
+    {"project":"Jardak AI","strategy":"BUILD + PILOT","score":80,"rationale":"potentially valuable B2B technology; evidence from real stores is the key gate","next":"secure 3-store pilot"},
+    {"project":"Fancy Hub","strategy":"VALIDATE OR HOLD","score":62,"rationale":"needs stronger commercial evidence before additional investment","next":"conversion and unit-economics audit"},
+    {"project":"JAZAL","strategy":"MONETIZE + ASSESS","score":59,"rationale":"content asset can be tested cheaply before a keep/sell decision","next":"test one monetization offer"},
+    {"project":"Jeel Tech Website","strategy":"STRATEGIC ASSET","score":54,"rationale":"supports the portfolio rather than being an immediate exit candidate","next":"use as lead-generation and credibility layer"},
+    {"project":"Madrasati App","strategy":"HOLD / DISCOVER","score":43,"rationale":"uncertain product economics and lower progress","next":"product-market fit audit; stop if evidence remains weak"}
+  ],
+  "exitPlaybook":["measure recurring revenue","measure growth and retention","document IP and code ownership","estimate buyer fit","prepare data room","model valuation range","compare sale vs continued cash flow"],
+  "capitalRule":"No investment or sale commitment is executed automatically. JODA produces a recommendation and requires explicit owner approval for financial or contractual action."
+}
