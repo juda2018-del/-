@@ -1,0 +1,15 @@
+{
+  "version":"0.1",
+  "updated":"2026-08-22",
+  "formula":{"commercialOpportunity":0.35,"readiness":0.25,"momentum":0.15,"strategicFit":0.15,"effortEfficiency":0.10},
+  "decisions":[
+    {"rank":1,"project":"Suqly AI","score":87,"action":"growth sprint","why":"high progress + active development + direct revenue path","next":["audit acquisition funnel","identify 3 fastest customer channels","prepare measurable 14-day growth experiment"]},
+    {"rank":2,"project":"FUSE Iraq","score":84,"action":"launch-readiness sprint","why":"high priority and strong progress; remaining UX issues can unlock launch","next":["finish iPhone UX blockers","run end-to-end order test","prepare release checklist"]},
+    {"rank":3,"project":"Jardak AI","score":76,"action":"production hardening","why":"high strategic value but mobile/CI verification remains","next":["verify build pipeline","test core inventory flow","prepare first pilot"]},
+    {"rank":4,"project":"Fancy Hub","score":63,"action":"conversion audit","why":"development stage; validate launch economics before more build work","next":["audit checkout UX","define launch KPI","estimate acquisition cost"]},
+    {"rank":5,"project":"JAZAL","score":60,"action":"monetization experiment","why":"high completion but GitHub linkage needs restoration","next":["restore repository visibility","define content growth loop","test monetization offer"]},
+    {"rank":6,"project":"Jeel Tech Website","score":52,"action":"brand foundation","why":"useful strategic asset but lower immediate revenue impact","next":["clarify company positioning","add portfolio proof","create lead capture"]},
+    {"rank":7,"project":"Madrasati App","score":45,"action":"discovery audit","why":"lower current progress and unclear launch path","next":["product audit","define target user","decide build/hold"]}
+  ],
+  "policy":"Recommendations are advisory. External publishing, spending, deletion, messaging and production changes require explicit owner approval."
+}
