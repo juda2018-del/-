@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#07111f"><title>JODA OS — Master Agent</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand"><div class="logo">J</div><div><b>JODA OS</b><span>MASTER AGENT</span></div></div>
+    <nav>
+      <button class="nav active" data-view="home">⌂ <span>مركز القيادة</span></button>
+      <button class="nav" data-view="portfolio">◈ <span>المحفظة</span></button>
+      <button class="nav" data-view="opportunities">✦ <span>الفرص</span></button>
+      <button class="nav" data-view="builder">＋ <span>بناء شركة</span></button>
+      <button class="nav" data-view="growth">↗ <span>النمو</span></button>
+      <button class="nav" data-view="research">⌕ <span>الأبحاث</span></button>
+    </nav>
+    <div class="agent-status"><i></i><div><b>الوكيل متصل</b><small>جاهز للتنفيذ</small></div></div>
+  </aside>
+  <main>
+    <header><div><p class="eyebrow">JODA COMMAND CENTER</p><h1 id="title">مركز القيادة</h1></div><div class="header-actions"><button id="refresh">تحديث</button><button class="primary" id="agentBtn">✦ اسأل الوكيل</button></div></header>
+    <section id="app"></section>
+  </main>
+  <div class="modal hidden" id="modal"><div class="modal-card"><button class="close" id="close">×</button><p class="eyebrow">MASTER AGENT</p><h2>شنو تريد من JODA؟</h2><textarea id="prompt" placeholder="مثلاً: حلل مشاريعي واقترحلي شركة جديدة مربحة بالعراق..."></textarea><button class="primary wide" id="run">تشغيل الوكيل ✦</button><div id="answer"></div></div></div>
+  <script src="app.js"></script>
+</body>
+</html>
