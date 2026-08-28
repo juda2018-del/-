@@ -36,8 +36,15 @@ const checks = [
   ['Capacitor', /initCapacitor/],
   ['Hash routing', /parseHashRoute/],
   ['Episode navigation', /playNextEpisode/],
-  ['Publish filter', /getPublicStories/]
+  ['Publish filter', /getPublicStories/],
+  ['Admin guard', /function isAdmin/]
 ];
+
+const firestoreRules = fs.readFileSync(path.join(root, 'firebase', 'firestore.rules'), 'utf8');
+if (!/token\.admin/.test(firestoreRules)) {
+  console.error('CHECK FAILED: Firestore admin custom claim rules');
+  failed = true;
+}
 
 for (const [name, re] of checks) {
   if (!re.test(appJs)) {

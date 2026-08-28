@@ -1,13 +1,33 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    function validSubmission() {
+      return request.resource.data.keys().hasAll(['title', 'genre', 'body'])
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 200
+        && request.resource.data.genre is string
+        && request.resource.data.genre.size() > 0
+        && request.resource.data.genre.size() <= 50
+        && request.resource.data.body is string
+        && request.resource.data.body.size() >= 10
+        && request.resource.data.body.size() <= 10000
+        && (!('name' in request.resource.data) || (request.resource.data.name is string && request.resource.data.name.size() <= 120))
+        && (!('phone' in request.resource.data) || (request.resource.data.phone is string && request.resource.data.phone.size() <= 30));
+    }
+
     match /jazal/content {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isAdmin();
     }
+
     match /submissions/{id} {
-      allow create: if true;
-      allow read, update, delete: if request.auth != null;
+      allow create: if validSubmission();
+      allow read, update, delete: if isAdmin();
     }
   }
 }

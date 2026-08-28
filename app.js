@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, collection, addDoc, updateDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
 
@@ -14,6 +14,52 @@ const firebaseConfig = {
 };
 
 const APP_VERSION = 'jazal-production-v1';
+const FIRESTORE_RULES_TEXT = `rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+    function validSubmission() {
+      return request.resource.data.keys().hasAll(['title', 'genre', 'body'])
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 200
+        && request.resource.data.genre is string
+        && request.resource.data.body is string
+        && request.resource.data.body.size() >= 10
+        && request.resource.data.body.size() <= 10000;
+    }
+    match /jazal/content {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /submissions/{id} {
+      allow create: if validSubmission();
+      allow read, update, delete: if isAdmin();
+    }
+  }
+}`;
+const STORAGE_RULES_TEXT = `rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+    match /audio/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin()
+        && request.resource.size < 100 * 1024 * 1024
+        && request.resource.contentType.matches('audio/.*');
+    }
+    match /covers/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin()
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+  }
+}`;
 
 let fbApp = null;
 let db = null;
@@ -134,8 +180,8 @@ const defaultState = {
   player:{playing:false, kind:'episode', title:'الليلة الأولى', subtitle:'الباب القديم · صوت تجريبي شغال', storyId:'old-door', episodeId:'old-door-1', audioSrc:DEMO_AUDIO_SRC, progress:0, duration:755, speed:'1x'},
   fm:{live:true, title:'ليالي جزل', host:'ستوديو جزل', note:'بث تجريبي مباشر للحكايات والحوارات الصوتية', listeners:128, streamUrl:DEMO_AUDIO_SRC},
   user:{name:'مستمع جزل', logged:true},
-  submissions:[], stories:baseStories,
-  firebase:{mode:'firebase', projectId:'jazal-audio', apiKey:firebaseConfig.apiKey, authDomain:firebaseConfig.authDomain, firestoreReady:true, live:false, signedIn:false, authEmail:'', lastSync:'', error:'', cloudStatus:'جاهز'},
+  submissions:[], mySubmissions:[], stories:baseStories,
+  firebase:{mode:'firebase', projectId:'jazal-audio', apiKey:firebaseConfig.apiKey, authDomain:firebaseConfig.authDomain, firestoreReady:true, live:false, signedIn:false, isAdmin:false, authEmail:'', lastSync:'', error:'', cloudStatus:'جاهز'},
   admin:{tab:'overview'},
   schedule:[
     {time:'08:00 مساءً', title:'ليالي جزل', host:'ستوديو جزل', desc:'قصص قصيرة مختارة من جمهور جزل'},
@@ -172,9 +218,25 @@ function qs(sel){ return document.querySelector(sel); }
 function qsa(sel){ return [...document.querySelectorAll(sel)]; }
 function app(){ return qs('#app'); }
 function esc(str=''){ return String(str).replace(/[&<>'"]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[s])); }
+function sanitizeText(str='', max=5000){ return String(str||'').trim().slice(0, max); }
+function isAdmin(){ return state.firebase.isAdmin === true; }
+function requireAdmin(action='هذه العملية'){
+  if(isAdmin()) return true;
+  toast(`${action} تحتاج صلاحية أدمن`);
+  return false;
+}
+function isSafeAudioUrl(url=''){
+  const value=String(url||'').trim();
+  if(!value) return false;
+  if(value.startsWith('assets/') || value.startsWith('./assets/')) return true;
+  try{
+    const parsed=new URL(value, location.origin);
+    return parsed.protocol==='https:' || parsed.protocol==='blob:';
+  }catch(e){ return false; }
+}
 function toast(msg){ const old=qs('.toast'); if(old) old.remove(); const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2400); }
 function nav(view){ state.currentView=view; syncHash(view); save(); render(); closeDrawer(); }
-function setAdminTab(tab){ state.admin.tab=tab; save(); render(); }
+function setAdminTab(tab){ if(tab!=='firebase' && !isAdmin()) tab='firebase'; state.admin.tab=tab; save(); render(); }
 function isFav(id){ return state.favorites.includes(id); }
 function updateRecent(id){ state.recent=[id,...state.recent.filter(x=>x!==id)].slice(0,8); }
 function logoIcon(){ return `<img class="jazal-mark" src="assets/jazal-mark.svg?v=jazal-production-v1" alt="شعار جزل" />`; }
@@ -326,7 +388,7 @@ function libraryView(){
 
 function detailView(storyId){
   const story=getStory(storyId);
-  if(!story || (story.published===false && !state.firebase.signedIn)){
+  if(!story || (story.published===false && !isAdmin())){
     return `<h1 class="page-title">غير متاح</h1><p class="page-subtitle">هذه القصة مخفية أو غير موجودة.</p><div class="cta-row"><button class="primary" data-view="library">عودة للمكتبة</button></div>`;
   }
   updateRecent(story.id);
@@ -366,7 +428,7 @@ function fmView(){
 function submitView(){
   return `<h1 class="page-title">احچي قصتك</h1><p class="page-subtitle">دز قصتك، وإذا كانت مناسبة نحولها لحلقة صوتية على جزل. الاسم والرقم اختياري.</p>
   <form class="form-card" id="storyForm"><div class="field"><label>عنوان القصة</label><input name="title" required placeholder="مثال: آخر مكالمة" /></div><div class="field"><label>نوع القصة</label><select name="genre"><option>واقعي</option><option>رعب</option><option>جريمة</option><option>حب</option><option>بودكاست</option></select></div><div class="field"><label>قصتك</label><textarea name="body" required placeholder="اكتب القصة هنا..."></textarea></div><div class="field"><label>اسمك أو لقبك اختياري</label><input name="name" placeholder="مستمع جزل" /></div><div class="field"><label>واتساب اختياري</label><input name="phone" placeholder="07xx xxx xxxx" /></div><button class="primary" type="submit" style="width:100%">إرسال القصة</button></form>
-  <section class="section"><div class="section-head"><h2>قصصك المرسلة</h2><span>${state.submissions.length}</span></div>${state.submissions.length?`<div class="admin-list">${state.submissions.slice().reverse().map((s,i)=>`<div class="admin-item"><strong>${esc(s.title)}</strong><small>${esc(s.genre)} · ${esc(s.status||'قيد المراجعة')} · ${esc(s.name||'بدون اسم')}</small></div>`).join('')}</div>`:`<div class="empty">بعدك ما مرسل قصة.</div>`}</section>`;
+  <section class="section"><div class="section-head"><h2>قصصك المرسلة</h2><span>${state.mySubmissions.length}</span></div>${state.mySubmissions.length?`<div class="admin-list">${state.mySubmissions.slice().reverse().map((s)=>`<div class="admin-item"><strong>${esc(s.title)}</strong><small>${esc(s.genre)} · ${esc(s.status||'قيد المراجعة')} · ${esc(s.name||'بدون اسم')}</small></div>`).join('')}</div>`:`<div class="empty">بعدك ما مرسل قصة.</div>`}</section>`;
 }
 
 function plansView(){ return `<h1 class="page-title">الباقات</h1><p class="page-subtitle">الاشتراكات حالياً <b class="gold">قريباً</b>. نخلي الصفحة جاهزة حتى من نفعّل الدفع تنضاف بدون تغيير كبير.</p><div class="plan active-plan"><div class="row"><h3>مجاني</h3><span class="soon">مفعل</span></div><ul><li>تشغيل الحلقات المجانية</li><li>جزل FM مباشر</li><li>إرسال قصتك</li></ul></div><div class="plan"><div class="row"><h3>شهري</h3><span class="soon">قريباً</span></div><ul><li>كل الحلقات</li><li>بدون إعلانات</li><li>مسلسلات جزل Originals</li></ul></div><div class="plan"><div class="row"><h3>VIP</h3><span class="soon">قريباً</span></div><ul><li>حلقات قبل الجميع</li><li>بث خاص</li><li>محتوى حصري</li></ul></div>`; }
@@ -388,47 +450,24 @@ function accountView(){
 function adminTabs(){ const tabs=[['overview','نظرة'],['content','المحتوى'],['episodes','الحلقات'],['fm','FM'],['schedule','الجدول'],['submissions','الجمهور'],['firebase','Firebase'],['backup','نسخ']]; return `<div class="tabs admin-tabs">${tabs.map(([id,label])=>`<button class="tab ${state.admin.tab===id?'active':''}" data-admin-tab="${id}">${label}</button>`).join('')}</div>`; }
 function adminView(){
   const tab=state.admin.tab||'overview';
-  if(!state.firebase.signedIn && tab !== 'firebase'){
-    return `<h1 class="page-title">استوديو جزل</h1><p class="page-subtitle">لوحة الإدارة محمية. سجّل دخول الأدمن حتى تظهر أدوات تعديل المحتوى.</p><div class="admin-lock panel-card"><b>دخول الإدارة</b><p class="muted">المحتوى يبقى للقراءة العامة، أما التعديل والحذف والرفع إلى Firebase فيحتاج حساب أدمن.</p></div>${adminTabs()}${adminTabView('firebase')}`;
+  if(!isAdmin() && tab !== 'firebase'){
+    const signedInNoAdmin = state.firebase.signedIn && !state.firebase.isAdmin;
+    return `<h1 class="page-title">استوديو جزل</h1><p class="page-subtitle">لوحة الإدارة محمية بصلاحية Firebase Admin Custom Claim.</p><div class="admin-lock panel-card"><b>دخول الإدارة</b><p class="muted">${signedInNoAdmin?'تم تسجيل الدخول لكن هذا الحساب ليس أدمن. اطلب تفعيل claim admin من Firebase Console.':'المحتوى يبقى للقراءة العامة، أما التعديل والحذف والرفع إلى Firebase فيحتاج حساب أدمن مع صلاحية admin.'}</p></div>${adminTabs()}${adminTabView('firebase')}`;
   }
   return `<h1 class="page-title">استوديو جزل</h1><p class="page-subtitle">استوديو إدارة محمي — المحتوى، الحلقات، FM، والجمهور مرتب للانطلاق.</p>${adminTabs()}${adminTabView(tab)}`;
 }
 function adminTabView(tab){
-if(tab==='overview') return `<div class="stats"><div class="stat"><strong>${state.stories.length}</strong><small>أعمال</small></div><div class="stat"><strong>${state.stories.reduce((a,s)=>a+(s.episodeList?.length||0),0)}</strong><small>حلقات</small></div><div class="stat"><strong>${state.submissions.length}</strong><small>قصص جمهور</small></div></div><div class="panel-card sync-card"><div class="row"><div><b>Firebase Live</b><p class="muted" style="margin:6px 0 0">${state.firebase.live?'متصل بـ Firestore — التغييرات تنتشر لكل المستخدمين':'جاهز للمزامنة — افتح Firebase واضغط رفع البيانات'}${state.firebase.error?' · '+esc(state.firebase.error):''}</p></div><span class="soon">${state.firebase.signedIn?'أدمن داخل':'قراءة عامة'}</span></div></div><div class="cta-row"><button class="primary" data-admin-tab="content">إضافة قصة</button><button class="secondary" data-admin-tab="firebase">Firebase</button></div>`;
+if(tab==='overview') return `<div class="stats"><div class="stat"><strong>${state.stories.length}</strong><small>أعمال</small></div><div class="stat"><strong>${state.stories.reduce((a,s)=>a+(s.episodeList?.length||0),0)}</strong><small>حلقات</small></div><div class="stat"><strong>${state.submissions.length}</strong><small>قصص جمهور</small></div></div><div class="panel-card sync-card"><div class="row"><div><b>Firebase Live</b><p class="muted" style="margin:6px 0 0">${state.firebase.live?'متصل بـ Firestore — التغييرات تنتشر لكل المستخدمين':'جاهز للمزامنة — ارفع المحتوى من Firebase بعد الدخول كأدمن'}${state.firebase.error?' · '+esc(state.firebase.error):''}</p></div><span class="soon">${isAdmin()?'أدمن':'قراءة عامة'}</span></div></div><div class="cta-row"><button class="primary" data-admin-tab="content">إضافة قصة</button><button class="secondary" data-admin-tab="firebase">Firebase</button></div>`;
   if(tab==='content') return `<div class="form-card"><h2 style="margin-top:0">إضافة قصة / مسلسل</h2><form id="addStoryForm"><div class="field"><label>العنوان</label><input name="title" required placeholder="اسم القصة" /></div><div class="field"><label>التصنيف</label><select name="genre"><option>رعب</option><option>جريمة</option><option>حب</option><option>واقعي</option><option>بودكاست</option><option>أطفال</option></select></div><div class="field"><label>إيموجي الغلاف</label><input name="emoji" value="🎧" /></div><div class="field"><label>وسم قصير</label><input name="tag" value="جزل Originals" /></div><div class="field"><label>الوصف</label><textarea name="desc" required placeholder="اكتب وصف مختصر وجذاب"></textarea></div><div class="field"><label>عنوان أول حلقة</label><input name="episodeTitle" value="الحلقة الأولى" /></div><div class="field"><label>رابط MP3 لأول حلقة اختياري</label><input name="audioSrc" placeholder="https://.../episode.mp3" /></div><div class="field"><label>أو ارفع ملف MP3</label><input name="audioFile" type="file" accept="audio/*" /></div><label class="switch-row"><input type="checkbox" name="published" checked /> منشور للجمهور</label><button class="primary" type="submit" style="width:100%">إضافة للمكتبة</button></form></div><section class="section"><div class="section-head"><h2>المحتوى الحالي</h2><span>${state.stories.length}</span></div><div class="admin-list">${state.stories.map(s=>`<div class="admin-item"><strong>${esc(s.title)}</strong><small>${esc(s.genre)} · ${storyEpisodeCount(s)} حلقة · ${s.featured?'اختيار اليوم · ':''}${s.published===false?'مخفي':'منشور'}</small><div class="admin-actions"><button class="tiny-btn" data-edit-story="${s.id}">تعديل</button><button class="tiny-btn" data-featured-story="${s.id}">اختيار اليوم</button><button class="tiny-btn" data-toggle-publish="${s.id}">${s.published===false?'نشر':'إخفاء'}</button><button class="tiny-btn" data-delete-story="${s.id}">حذف</button></div></div>`).join('')}</div></section>`;
   if(tab==='episodes') return `<div class="form-card"><h2 style="margin-top:0">إضافة حلقة لقصة موجودة</h2><form id="addEpisodeForm"><div class="field"><label>اختر القصة</label><select name="storyId">${state.stories.map(s=>`<option value="${s.id}">${esc(s.title)}</option>`).join('')}</select></div><div class="field"><label>عنوان الحلقة</label><input name="title" required placeholder="اسم الحلقة" /></div><div class="field"><label>مدة الحلقة</label><input name="duration" value="10:00" /></div><div class="field"><label>رابط MP3 اختياري</label><input name="audioSrc" placeholder="اتركه فارغ للصوت التجريبي" /></div><div class="field"><label>أو ارفع ملف MP3</label><input name="audioFile" type="file" accept="audio/*" /></div><label class="switch-row"><input type="checkbox" name="free" checked /> مجانية حالياً</label><button class="primary" type="submit" style="width:100%">إضافة الحلقة</button></form></div><section class="section"><div class="section-head"><h2>إدارة الحلقات</h2></div><div class="admin-list">${state.stories.map(s=>`<div class="admin-item"><strong>${esc(s.title)}</strong><small>${storyEpisodeCount(s)} حلقة</small>${(s.episodeList||[]).map((ep,i)=>`<div class="episode admin-episode"><div class="episode-index">${i+1}</div><div><h4>${esc(ep.title)}</h4><p>${esc(ep.duration)} · ${ep.free?'مجانية':'مقفلة'}${ep.audioSrc&&ep.audioSrc!==DEMO_AUDIO_SRC?' · MP3':' · Demo'}</p></div><div class="admin-actions"><button class="tiny-btn" data-move-episode="${s.id}|${ep.id}|up" ${i===0?'disabled':''}>↑</button><button class="tiny-btn" data-move-episode="${s.id}|${ep.id}|down" ${i===(s.episodeList.length-1)?'disabled':''}>↓</button><button class="tiny-btn" data-edit-episode="${s.id}|${ep.id}">تعديل</button><button class="tiny-btn" data-delete-episode="${s.id}|${ep.id}">حذف</button></div></div>`).join('')}</div>`).join('')}</div></section>`;
   if(tab==='fm') return `<div class="form-card"><h2 style="margin-top:0">تحديث جزل FM</h2><form id="fmForm"><div class="field"><label>اسم البرنامج الحالي</label><input name="title" value="${esc(state.fm.title)}" /></div><div class="field"><label>المقدم</label><input name="host" value="${esc(state.fm.host)}" /></div><div class="field"><label>ملاحظة البث</label><textarea name="note">${esc(state.fm.note)}</textarea></div><div class="field"><label>رابط البث / MP3 اختياري</label><input name="streamUrl" value="${esc(state.fm.streamUrl||'')}" placeholder="https://.../stream.mp3" /></div><label class="switch-row"><input type="checkbox" name="live" ${state.fm.live?'checked':''}/> مباشر الآن</label><button class="primary" type="submit" style="width:100%">حفظ FM</button></form></div>`;
   if(tab==='schedule') return `<div class="form-card"><h2 style="margin-top:0">إضافة موعد إلى جدول FM</h2><form id="scheduleForm"><div class="field"><label>الوقت</label><input name="time" value="08:00 مساءً" required /></div><div class="field"><label>عنوان البرنامج</label><input name="title" placeholder="ليالي جزل" required /></div><div class="field"><label>المقدم</label><input name="host" value="ستوديو جزل" /></div><div class="field"><label>الوصف</label><textarea name="desc" placeholder="وصف مختصر للموعد"></textarea></div><button class="primary" type="submit" style="width:100%">إضافة للجدول</button></form></div><section class="section"><div class="section-head"><h2>جدول اليوم</h2><span>${state.schedule.length}</span></div><div class="admin-list">${state.schedule.map((item,i)=>`<div class="admin-item"><strong>${esc(item.title)}</strong><small>${esc(item.time)} · ${esc(item.host)}<br>${esc(item.desc)}</small><button class="tiny-btn" data-delete-schedule="${i}">حذف الموعد</button></div>`).join('')}</div></section>`;
   if(tab==='submissions') return `<section class="section"><div class="section-head"><h2>قصص الجمهور</h2><span>${state.submissions.length}</span></div>${state.submissions.length?`<div class="admin-list">${state.submissions.slice().reverse().map((s,i)=>`<div class="admin-item"><strong>${esc(s.title)}</strong><small>${esc(s.genre)} · ${esc(s.status||'قيد المراجعة')}<br>${esc(s.body).slice(0,110)}...</small><div class="admin-actions"><button class="tiny-btn" data-convert-submission="${state.submissions.length-1-i}">تحويل لقصة</button><button class="tiny-btn" data-mark-submission="${state.submissions.length-1-i}|مقبولة">قبول</button><button class="tiny-btn" data-mark-submission="${state.submissions.length-1-i}|مرفوضة">رفض</button></div></div>`).join('')}</div>`:`<div class="empty">ماكو قصص مرسلة بعد.</div>`}</section>`;
-  if(tab==='firebase') return `<div class="panel-card firebase-status-card"><div class="row"><div><b>حالة Firebase</b><p class="muted" style="margin:6px 0 0">Project: ${esc(state.firebase.projectId)}<br>الحالة: ${state.firebase.live?'متصل مباشر':'جاهز للمزامنة'}<br>${state.firebase.signedIn?'داخل كأدمن: '+esc(state.firebase.authEmail):'غير داخل كأدمن'}${state.firebase.error?'<br>تنبيه: '+esc(state.firebase.error):''}</p></div><span class="soon">Live</span></div><div class="cta-row cloud-quick-actions"><button class="primary" data-cloud-seed ${state.firebase.signedIn?'':'disabled'}>رفع البيانات الحالية إلى Firebase</button><button class="secondary" data-cloud-refresh>سحب آخر بيانات</button></div><p class="muted tiny-note">إذا كنت داخل كأدمن، اضغط زر الرفع هنا مباشرة. ما تحتاج تنزل تحت.</p></div>
-  <div class="form-card"><h2 style="margin-top:0">دخول الإدارة</h2>${state.firebase.signedIn?`<p class="muted">أنت داخل حالياً كأدمن. أي تعديل على القصص أو FM ينحفظ في Firestore.</p><button class="secondary" type="button" data-signout style="width:100%">تسجيل خروج</button>`:`<form id="loginForm"><div class="field"><label>إيميل الأدمن</label><input name="email" type="email" placeholder="admin@jazal.app" required /></div><div class="field"><label>كلمة السر</label><input name="password" type="password" placeholder="••••••••" required /></div><button class="primary" type="submit" style="width:100%">دخول الأدمن</button></form><div class="divider"></div><form id="signupAdminForm"><p class="muted">أول مرة فقط: فعّل Email/Password من Firebase ثم أنشئ حساب الأدمن من هنا.</p><div class="field"><label>إيميل أدمن جديد</label><input name="email" type="email" placeholder="admin@jazal.app" required /></div><div class="field"><label>كلمة سر 6 أحرف وأكثر</label><input name="password" type="password" placeholder="••••••••" required /></div><button class="secondary" type="submit" style="width:100%">إنشاء أدمن</button></form>`}</div>
-  <div class="panel-card"><b>مزامنة المحتوى</b><p class="muted">من بعد الدخول كأدمن، اضغط رفع البيانات حتى ننشئ مستند Firestore الأول إذا كان فارغ.</p><div class="cta-row"><button class="primary" data-cloud-seed>رفع البيانات الحالية إلى Firebase</button><button class="secondary" data-cloud-refresh>سحب آخر بيانات</button></div></div>
-  <div class="form-card"><h2 style="margin-top:0">Firestore Rules</h2><p class="muted">انسخها في Firestore Database → Rules. ملف جاهز: <code>firebase/firestore.rules</code></p><textarea id="rulesBox" class="backup-box" readonly>rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /jazal/content {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-    match /submissions/{id} {
-      allow create: if true;
-      allow read, update, delete: if request.auth != null;
-    }
-  }
-}</textarea><button class="secondary" type="button" data-copy-rules style="width:100%;margin-top:10px">نسخ القواعد</button></div>
-  <div class="form-card"><h2 style="margin-top:0">Storage Rules</h2><p class="muted">انسخها في Firebase Storage → Rules. ملف جاهز: <code>firebase/storage.rules</code></p><textarea id="storageRulesBox" class="backup-box" readonly>rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /audio/{allPaths=**} {
-      allow read: if true;
-      allow write: if request.auth != null && request.resource.size < 100 * 1024 * 1024 && request.resource.contentType.matches('audio/.*');
-    }
-    match /covers/{allPaths=**} {
-      allow read: if true;
-      allow write: if request.auth != null && request.resource.size < 5 * 1024 * 1024 && request.resource.contentType.matches('image/.*');
-    }
-  }
-}</textarea><button class="secondary" type="button" data-copy-storage-rules style="width:100%;margin-top:10px">نسخ Storage Rules</button></div>`;
+  if(tab==='firebase') return `<div class="panel-card firebase-status-card"><div class="row"><div><b>حالة Firebase</b><p class="muted" style="margin:6px 0 0">Project: ${esc(state.firebase.projectId)}<br>الحالة: ${state.firebase.live?'متصل مباشر':'جاهز للمزامنة'}<br>${isAdmin()?'أدمن: '+esc(state.firebase.authEmail):state.firebase.signedIn?'مسجل بدون claim admin':'غير داخل'}${state.firebase.error?'<br>تنبيه: '+esc(state.firebase.error):''}</p></div><span class="soon">Live</span></div><div class="cta-row cloud-quick-actions"><button class="primary" data-cloud-seed ${isAdmin()?'':'disabled'}>رفع البيانات الحالية إلى Firebase</button><button class="secondary" data-cloud-refresh>سحب آخر بيانات</button></div><p class="muted tiny-note">الكتابة على Firestore/Storage تحتاج Custom Claim <code>admin: true</code>. استخدم <code>firebase/set-admin-claim.js</code> مرة واحدة من Firebase Console.</p></div>
+  <div class="form-card"><h2 style="margin-top:0">دخول الإدارة</h2>${isAdmin()?`<p class="muted">أنت داخل حالياً كأدمن. أي تعديل على القصص أو FM ينحفظ في Firestore.</p><button class="secondary" type="button" data-signout style="width:100%">تسجيل خروج</button>`:`<form id="loginForm"><div class="field"><label>إيميل الأدمن</label><input name="email" type="email" placeholder="admin@jazal.app" required autocomplete="username" /></div><div class="field"><label>كلمة السر</label><input name="password" type="password" placeholder="••••••••" required autocomplete="current-password" /></div><button class="primary" type="submit" style="width:100%">دخول الأدمن</button></form><p class="muted tiny-note">إنشاء حسابات الأدمن يتم من Firebase Authentication Console فقط، ثم تفعيل claim admin عبر السكربت.</p>`}</div>
+  <div class="panel-card"><b>مزامنة المحتوى</b><p class="muted">من بعد الدخول كأدمن، اضغط رفع البيانات حتى ننشئ مستند Firestore الأول إذا كان فارغ.</p><div class="cta-row"><button class="primary" data-cloud-seed ${isAdmin()?'':'disabled'}>رفع البيانات الحالية إلى Firebase</button><button class="secondary" data-cloud-refresh>سحب آخر بيانات</button></div></div>
+  <div class="form-card"><h2 style="margin-top:0">Firestore Rules</h2><p class="muted">انسخها في Firestore Database → Rules. ملف جاهز: <code>firebase/firestore.rules</code></p><textarea id="rulesBox" class="backup-box" readonly>${esc(FIRESTORE_RULES_TEXT)}</textarea><button class="secondary" type="button" data-copy-rules style="width:100%;margin-top:10px">نسخ القواعد</button></div>
+  <div class="form-card"><h2 style="margin-top:0">Storage Rules</h2><p class="muted">انسخها في Firebase Storage → Rules. ملف جاهز: <code>firebase/storage.rules</code></p><textarea id="storageRulesBox" class="backup-box" readonly>${esc(STORAGE_RULES_TEXT)}</textarea><button class="secondary" type="button" data-copy-storage-rules style="width:100%;margin-top:10px">نسخ Storage Rules</button></div>`;
   if(tab==='backup') return `<div class="form-card"><h2 style="margin-top:0">نسخ احتياطي</h2><div class="cta-row"><button class="primary" data-export>تصدير JSON</button><button class="secondary" data-import>استيراد من الصندوق</button></div><div class="field"><label>صندوق JSON</label><textarea id="backupBox" class="backup-box" placeholder="الصق النسخة الاحتياطية هنا للاستيراد"></textarea></div></div><button class="danger" data-reset style="width:100%;margin-top:10px">تصفير البيانات التجريبية</button>`;
   return '';
 }
@@ -484,10 +523,12 @@ function initFirebaseLive(){
     state.firebase.apiKey = firebaseConfig.apiKey;
     state.firebase.authDomain = firebaseConfig.authDomain;
     save();
-    onAuthStateChanged(auth, user => {
+    onAuthStateChanged(auth, async user => {
       firebaseUser = user;
       state.firebase.signedIn = !!user;
       state.firebase.authEmail = user?.email || '';
+      await syncAdminClaim(user);
+      bindSubmissionsListener();
       save();
       render();
     });
@@ -495,18 +536,33 @@ function initFirebaseLive(){
       if(snap.exists()) applyCloudContent(snap.data());
       else { state.firebase.live = false; state.firebase.cloudStatus = 'Firestore فارغ — ارفع البيانات من لوحة الإدارة'; save(); render(); }
     }, err => { state.firebase.error = prettyFireError(err); save(); render(); });
-    unsubSubmissions = onSnapshot(submissionsCol, snap => {
-      const remote = snap.docs.map(d => ({docId:d.id, ...d.data()})).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
-      state.submissions = remote;
-      state.firebase.live = true;
-      state.firebase.error = '';
-      save();
-      render();
-    }, err => { state.firebase.error = prettyFireError(err); save(); render(); });
   }catch(err){ state.firebase.error = prettyFireError(err); save(); }
+}
+async function syncAdminClaim(user){
+  if(!user){ state.firebase.isAdmin = false; return; }
+  try{
+    const token = await user.getIdTokenResult(true);
+    state.firebase.isAdmin = token.claims.admin === true;
+  }catch(err){
+    state.firebase.isAdmin = false;
+    state.firebase.error = prettyFireError(err);
+  }
+}
+function bindSubmissionsListener(){
+  if(unsubSubmissions){ unsubSubmissions(); unsubSubmissions = null; }
+  if(!isAdmin() || !submissionsCol) return;
+  unsubSubmissions = onSnapshot(submissionsCol, snap => {
+    const remote = snap.docs.map(d => ({docId:d.id, ...d.data()})).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+    state.submissions = remote;
+    state.firebase.live = true;
+    state.firebase.error = '';
+    save();
+    render();
+  }, err => { state.firebase.error = prettyFireError(err); save(); render(); });
 }
 async function pushCloud(showToast=false){
   if(applyingCloud || !contentRef) return;
+  if(!requireAdmin('رفع البيانات')) return;
   try{
     await setDoc(contentRef, {...cloudContentPayload(), updatedAtServer: serverTimestamp()}, {merge:true});
     state.firebase.live = true;
@@ -517,7 +573,7 @@ async function pushCloud(showToast=false){
   }catch(err){ state.firebase.error = prettyFireError(err); save(); if(showToast) toast(state.firebase.error); else console.warn(err); }
 }
 function cloudSaveSoon(reason='update'){
-  if(!contentRef || applyingCloud) return;
+  if(!contentRef || applyingCloud || !isAdmin()) return;
   clearTimeout(cloudPushTimer);
   cloudPushTimer = setTimeout(()=>pushCloud(false), 650);
 }
@@ -529,21 +585,32 @@ async function pullCloudOnce(){
 async function loginAdmin(e){
   e.preventDefault();
   const f = new FormData(e.target);
-  try{ await signInWithEmailAndPassword(auth, f.get('email'), f.get('password')); toast('تم دخول الأدمن'); }
+  try{
+    await signInWithEmailAndPassword(auth, f.get('email'), f.get('password'));
+    await syncAdminClaim(auth.currentUser);
+    if(!isAdmin()){
+      await signOut(auth);
+      toast('هذا الحساب ليس أدمن. فعّل claim admin من Firebase Console.');
+      return;
+    }
+    bindSubmissionsListener();
+    toast('تم دخول الأدمن');
+  }
   catch(err){ toast(prettyFireError(err)); }
 }
-async function createAdmin(e){
-  e.preventDefault();
-  const f = new FormData(e.target);
-  try{ await createUserWithEmailAndPassword(auth, f.get('email'), f.get('password')); toast('تم إنشاء أدمن ودخلت للحساب'); }
-  catch(err){ toast(prettyFireError(err)); }
+async function logoutAdmin(){
+  try{
+    await signOut(auth);
+    state.firebase.isAdmin = false;
+    bindSubmissionsListener();
+    toast('تم تسجيل الخروج');
+  }catch(err){ toast(prettyFireError(err)); }
 }
-async function logoutAdmin(){ try{ await signOut(auth); toast('تم تسجيل الخروج'); }catch(err){ toast(prettyFireError(err)); } }
 function copyRules(){ const box=qs('#rulesBox'); if(box){ box.select(); navigator.clipboard?.writeText(box.value); toast('تم نسخ Firestore Rules'); } }
 function copyStorageRules(){ const box=qs('#storageRulesBox'); if(box){ box.select(); navigator.clipboard?.writeText(box.value); toast('تم نسخ Storage Rules'); } }
 async function uploadAudioFile(file, prefix='episode'){
   if(!file || !storage) throw new Error('Firebase Storage غير مهيأ');
-  if(!state.firebase.signedIn) throw new Error('سجّل دخول الأدمن أولاً');
+  if(!requireAdmin('رفع الصوت')) throw new Error('صلاحيات أدمن مطلوبة');
   const safeName = `${prefix}-${Date.now()}-${String(file.name||'audio').replace(/[^\w.\-]+/g,'_')}`;
   const storageRef = ref(storage, `audio/${safeName}`);
   toast('جاري رفع الصوت...');
@@ -560,6 +627,7 @@ async function resolveAudioFromForm(formData){
   const file = formData.get('audioFile');
   const url = String(formData.get('audioSrc')||'').trim();
   if(file && file.size) return uploadAudioFile(file);
+  if(url && !isSafeAudioUrl(url)) throw new Error('رابط الصوت يجب أن يكون HTTPS أو ملف assets');
   return url;
 }
 function closeEditModal(){ if(editModal){ editModal.remove(); editModal=null; } }
@@ -673,7 +741,6 @@ function bindEvents(){
   const scheduleForm=qs('#scheduleForm'); if(scheduleForm) scheduleForm.onsubmit=addScheduleItem;
   const firebaseForm=qs('#firebaseForm'); if(firebaseForm) firebaseForm.onsubmit=saveFirebase;
   const loginForm=qs('#loginForm'); if(loginForm) loginForm.onsubmit=loginAdmin;
-  const signupAdminForm=qs('#signupAdminForm'); if(signupAdminForm) signupAdminForm.onsubmit=createAdmin;
   qsa('[data-signout]').forEach(el=>el.onclick=logoutAdmin);
   qsa('[data-cloud-seed]').forEach(el=>el.onclick=()=>pushCloud(true));
   qsa('[data-cloud-refresh]').forEach(el=>el.onclick=pullCloudOnce);
@@ -724,19 +791,32 @@ function toggleFav(id){ if(isFav(id)){state.favorites=state.favorites.filter(x=>
 async function submitStory(e){
   e.preventDefault();
   const f=new FormData(e.target);
-  const sub={title:f.get('title'), genre:f.get('genre'), body:f.get('body'), name:f.get('name'), phone:f.get('phone'), status:'قيد المراجعة', createdAt:new Date().toISOString()};
+  const sub={
+    title:sanitizeText(f.get('title'), 200),
+    genre:sanitizeText(f.get('genre'), 50),
+    body:sanitizeText(f.get('body'), 10000),
+    name:sanitizeText(f.get('name'), 120),
+    phone:sanitizeText(f.get('phone'), 30),
+    status:'قيد المراجعة',
+    createdAt:new Date().toISOString()
+  };
+  if(sub.body.length < 10){ toast('القصة قصيرة جداً'); return; }
   e.target.reset();
+  state.mySubmissions.push({...sub, localId:'local-'+Date.now()});
   const sent=await cloudSubmissionCreate(sub);
-  if(!sent) state.submissions.push({...sub, docId:'local-'+Date.now()});
-  save(); toast(sent?'وصلت قصتك إلى إدارة جزل':'انحفظت محلياً — فعّل Firestore Rules حتى توصل أونلاين'); render();
+  if(!sent) toast('انحفظت محلياً — فعّل Firestore Rules حتى توصل أونلاين');
+  else toast('وصلت قصتك إلى إدارة جزل');
+  save(); render();
 }
 function saveFM(e){
+  if(!requireAdmin('تعديل FM')) return;
   e.preventDefault();
   const f=new FormData(e.target);
   state.fm.title=f.get('title'); state.fm.host=f.get('host'); state.fm.note=f.get('note'); state.fm.streamUrl=availableAudio(f.get('streamUrl')); state.fm.live=!!f.get('live');
   save(); cloudSaveSoon('fm'); toast('تم حفظ إعدادات FM'); render();
 }
 function addStory(e){
+  if(!requireAdmin('إضافة قصة')) return;
   e.preventDefault();
   const f=new FormData(e.target);
   const submitBtn=e.target.querySelector('[type="submit"]');
@@ -748,6 +828,7 @@ function addStory(e){
   }).catch(err=>toast(prettyFireError(err))).finally(()=>{ submitBtn.disabled=false; });
 }
 function addEpisode(e){
+  if(!requireAdmin('إضافة حلقة')) return;
   e.preventDefault();
   const f=new FormData(e.target); const story=getStory(f.get('storyId')); if(!story) return;
   const submitBtn=e.target.querySelector('[type="submit"]');
@@ -760,12 +841,14 @@ function addEpisode(e){
   }).catch(err=>toast(prettyFireError(err))).finally(()=>{ submitBtn.disabled=false; });
 }
 function deleteStory(id){
+  if(!requireAdmin('حذف القصة')) return;
   if(!confirm('تحذف القصة من المكتبة؟')) return;
   state.stories=state.stories.filter(s=>s.id!==id); state.favorites=state.favorites.filter(x=>x!==id);
   save(); cloudSaveSoon('delete-story'); toast('انحذفت القصة'); render();
 }
 
 function editStory(id){
+  if(!requireAdmin('تعديل القصة')) return;
   const story=getStory(id); if(!story) return;
   openEditModal('تعديل القصة', [
     {name:'title', label:'العنوان', value:story.title, required:true},
@@ -787,12 +870,14 @@ function editStory(id){
   });
 }
 function togglePublish(id){
+  if(!requireAdmin('نشر القصة')) return;
   const story=getStory(id); if(!story) return;
   story.published = story.published === false ? true : false;
   save(); cloudSaveSoon('toggle-publish');
   toast(story.published===false?'تم إخفاء القصة':'تم نشر القصة'); render();
 }
 function moveEpisode(payload){
+  if(!requireAdmin('ترتيب الحلقات')) return;
   const [storyId, epId, dir]=payload.split('|');
   const story=getStory(storyId); if(!story) return;
   const list=story.episodeList||[];
@@ -804,6 +889,7 @@ function moveEpisode(payload){
   save(); cloudSaveSoon('reorder-episode'); toast('تم تغيير ترتيب الحلقة'); render();
 }
 function editEpisode(payload){
+  if(!requireAdmin('تعديل الحلقة')) return;
   const [storyId, epId]=payload.split('|'); const story=getStory(storyId); const ep=getEpisode(story, epId); if(!ep) return;
   openEditModal('تعديل الحلقة', [
     {name:'title', label:'عنوان الحلقة', value:ep.title, required:true},
@@ -818,16 +904,18 @@ function editEpisode(payload){
     const file=fd.get('audioFile');
     const url=String(fd.get('audioSrc')||'').trim();
     if(file && file.size) ep.audioSrc=availableAudio(await uploadAudioFile(file));
-    else if(url) ep.audioSrc=availableAudio(url);
+    else if(url) ep.audioSrc=availableAudio(isSafeAudioUrl(url)?url:'');
     story.free=(story.episodeList||[]).filter(e=>e.free).length;
     save(); cloudSaveSoon('edit-episode'); toast('تم تعديل الحلقة'); render();
   });
 }
 function setFeaturedStory(id){
+  if(!requireAdmin('اختيار اليوم')) return;
   state.stories.forEach(s=>s.featured=(s.id===id));
   save(); cloudSaveSoon('featured-story'); toast('صار اختيار اليوم'); render();
 }
 function deleteEpisode(payload){
+  if(!requireAdmin('حذف الحلقة')) return;
   const [storyId, epId]=payload.split('|'); const story=getStory(storyId); if(!story) return;
   if(!confirm('تحذف هذه الحلقة؟')) return;
   story.episodeList=(story.episodeList||[]).filter(e=>e.id!==epId);
@@ -835,11 +923,13 @@ function deleteEpisode(payload){
   save(); cloudSaveSoon('delete-episode'); toast('انحذفت الحلقة'); render();
 }
 function addScheduleItem(e){
+  if(!requireAdmin('جدول FM')) return;
   e.preventDefault(); const f=new FormData(e.target);
   state.schedule.push({time:f.get('time'), title:f.get('title'), host:f.get('host')||'ستوديو جزل', desc:f.get('desc')||'موعد جديد على جزل FM'});
   e.target.reset(); save(); cloudSaveSoon('schedule'); toast('تمت إضافة الموعد'); render();
 }
 function deleteSchedule(index){
+  if(!requireAdmin('جدول FM')) return;
   state.schedule.splice(index,1); save(); cloudSaveSoon('delete-schedule'); toast('انحذف الموعد'); render();
 }
 async function shareApp(){
@@ -853,12 +943,14 @@ async function shareStory(id){
 }
 
 async function markSubmission(index,status){
+  if(!requireAdmin('مراجعة القصص')) return;
   if(!state.submissions[index]) return;
   const item = state.submissions[index]; item.status=status;
   await cloudSubmissionUpdate(item,{status});
   save(); toast('تم تحديث حالة القصة'); render();
 }
 async function convertSubmission(index){
+  if(!requireAdmin('تحويل القصة')) return;
   const s=state.submissions[index]; if(!s) return;
   const id='submission-'+Date.now();
   state.stories.unshift({id,title:s.title,genre:s.genre,emoji:'✍️',tag:'من قصص الجمهور',mood:'واقعي',age:'عام',featured:false,published:true,desc:s.body,color:'linear-gradient(145deg,#101b39,#2563eb 48%,#a855f7)',rating:'جديد',episodes:1,free:1,listens:'0',duration:'10د',episodeList:[{id:id+'-1',title:'الحلقة الأولى',duration:'10:00',free:true,audioSrc:DEMO_AUDIO_SRC}]});
@@ -871,10 +963,10 @@ function saveFirebase(e){
   state.firebase.mode='firebase'; state.firebase.projectId=firebaseConfig.projectId; state.firebase.apiKey=firebaseConfig.apiKey; state.firebase.authDomain=firebaseConfig.authDomain; state.firebase.firestoreReady=true; state.firebase.lastSync=new Date().toISOString();
   save(); toast('Firebase مربوط داخل جزل'); render();
 }
-function exportBackup(){ const json=JSON.stringify(state,null,2); const box=qs('#backupBox'); if(box) box.value=json; navigator.clipboard?.writeText(json).catch(()=>{}); toast('تم تجهيز النسخة ونسخها'); }
-function importBackup(){ const box=qs('#backupBox'); if(!box || !box.value.trim()) return toast('الصق JSON أولاً'); try{ const parsed=JSON.parse(box.value); state=merge(structured(defaultState), parsed); save(); toast('تم استيراد النسخة'); render(); }catch(e){ toast('ملف JSON غير صحيح'); } }
+function exportBackup(){ if(!requireAdmin('تصدير النسخة')) return; const json=JSON.stringify(state,null,2); const box=qs('#backupBox'); if(box) box.value=json; navigator.clipboard?.writeText(json).catch(()=>{}); toast('تم تجهيز النسخة ونسخها'); }
+function importBackup(){ if(!requireAdmin('استيراد النسخة')) return; const box=qs('#backupBox'); if(!box || !box.value.trim()) return toast('الصق JSON أولاً'); try{ const parsed=JSON.parse(box.value); state=merge(structured(defaultState), parsed); save(); toast('تم استيراد النسخة'); render(); }catch(e){ toast('ملف JSON غير صحيح'); } }
 function installApp(){ if(deferredInstallPrompt){ deferredInstallPrompt.prompt(); deferredInstallPrompt=null; } else toast('من الآيفون: مشاركة → إضافة إلى الشاشة الرئيسية'); }
-function resetDemo(){ if(confirm('تريد تصفر بيانات النسخة التجريبية؟')){ localStorage.removeItem(STORAGE_KEY); state=structured(defaultState); render(); } }
+function resetDemo(){ if(!requireAdmin('تصفير البيانات')) return; if(confirm('تريد تصفر بيانات النسخة التجريبية؟')){ localStorage.removeItem(STORAGE_KEY); state=structured(defaultState); render(); } }
 function openDrawer(){ qs('#drawer').classList.remove('hidden'); qs('#drawer').setAttribute('aria-hidden','false'); bindDrawerButtons(); }
 function closeDrawer(){ qs('#drawer').classList.add('hidden'); qs('#drawer').setAttribute('aria-hidden','true'); }
 function bindDrawerButtons(){ qsa('#drawer [data-view]').forEach(btn=>btn.onclick=()=>nav(btn.dataset.view)); }

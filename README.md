@@ -19,31 +19,47 @@ npm run dev
 npm run build
 npm run lint
 npm run typecheck
+npm run cap:sync
 ```
 
 ## Firebase
 
 1. فعّل Email/Password في Authentication
-2. انسخ `firebase/firestore.rules` إلى Firestore Rules
-3. انسخ `firebase/storage.rules` إلى Storage Rules
-4. من **استوديو الإدارة → Firebase** أنشئ حساب الأدمن وارفع المحتوى
+2. أنشئ حساب الأدمن من Firebase Console (Authentication → Users)
+3. فعّل Custom Claim للأدمن:
+
+```bash
+npm install firebase-admin
+export GOOGLE_APPLICATION_CREDENTIALS=/path/to/serviceAccount.json
+node firebase/set-admin-claim.js admin@yourdomain.com
+```
+
+4. انشر Rules:
+
+```bash
+firebase deploy --only firestore:rules,storage --project jazal-audio
+```
+
+أو انسخ يدوياً:
+- `firebase/firestore.rules` → Firestore Rules
+- `firebase/storage.rules` → Storage Rules
+
+5. من **استوديو الإدارة → Firebase** سجّل دخول الأدمن وارفع المحتوى الحقيقي (MP3)
 
 ## Capacitor (iOS / Android)
 
 ```bash
 npm install
-npx cap add ios
-npx cap add android
 npm run cap:sync
-npm run cap:open:ios
-npm run cap:open:android
+npm run cap:open:ios      # يحتاج Mac + Xcode
+npm run cap:open:android  # Android Studio → Signed AAB
 ```
 
 ## النشر
 
-- **Web:** اربط المستودع بمشروع Vercel `JAZAL` أو `vercel deploy --prod`
-- **iOS:** Xcode → Archive → App Store Connect
-- **Android:** Android Studio → Generate Signed Bundle → Google Play
+- **Web:** اربط فرع `cursor/jazal-production-ready-c37b` بمشروع Vercel `JAZAL`
+- **iOS:** Xcode → Archive → App Store Connect (`iq.jeeltech.jazal`)
+- **Android:** Generate Signed Bundle → Google Play
 
 ## الصفحات
 
@@ -52,5 +68,6 @@ Home · Library · Story Details · Player · FM · Submit · Account · Admin �
 ## الأمان
 
 - قراءة المحتوى عامة
-- الكتابة على Firestore/Storage للأدمن فقط (`request.auth != null`)
-- لوحة الإدارة محمية بتسجيل Firebase Auth
+- الكتابة على Firestore/Storage للأدمن فقط (`custom claim: admin=true`)
+- لا يوجد تسجيل أدمن من التطبيق — الحسابات تُنشأ من Firebase Console
+- `assets/jazal-demo.mp3` للاختبار فقط — ارفع MP3 حقيقي من الإدارة
