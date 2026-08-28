@@ -1,9 +1,0 @@
-{
-  "updated":"2026-08-22",
-  "pipeline":[
-    {"name":"AI Growth Operator for Iraqi SMBs","type":"new-company","thesis":"combine Suqly learnings with JODA automation for a focused B2B operator","score":82,"stage":"validate","experiment":"interview 10 businesses and pre-sell a managed pilot"},
-    {"name":"Jardak Retail Intelligence","type":"spinout","thesis":"turn video inventory counting into recurring retail intelligence","score":79,"stage":"validate","experiment":"pilot with 3 stores and measure counting-time reduction"},
-    {"name":"Jeel Tech Venture Studio","type":"holding","thesis":"use JODA as internal operating layer to launch and sell focused software companies","score":78,"stage":"design","experiment":"define standard company-building playbook and first spinout"}
-  ],
-  "rule":"No new company enters full build until a small validation experiment produces evidence of demand, feasibility and economics."
-}

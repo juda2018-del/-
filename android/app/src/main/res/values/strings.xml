@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">JAZAL</string>
+    <string name="title_activity_main">JAZAL</string>
+    <string name="package_name">iq.jeeltech.jazal</string>
+    <string name="custom_url_scheme">iq.jeeltech.jazal</string>
+</resources>

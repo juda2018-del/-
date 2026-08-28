@@ -1,21 +1,56 @@
-# JODA OS
+# JAZAL / جَزَل
 
-**JODA OS — Master AI Operating System**
+بودكاست وقصص صوتية — Web + iOS + Android
 
-منصة خاصة لإدارة محفظة المشاريع والشركات، اكتشاف الفرص، تخطيط المنتجات، وتحويل الأفكار إلى مشاريع قابلة للتنفيذ.
-
-## الوحدات
-- **Command Center** — لوحة القيادة الرئيسية.
-- **Portfolio** — المشاريع الحالية والقديمة.
-- **Opportunity Engine** — اكتشاف وتقييم فرص جديدة.
-- **Company Builder** — بناء شركة من فكرة إلى خطة تنفيذ.
-- **Growth** — أهداف ومؤشرات النمو.
-- **Research** — مساحة أبحاث السوق والمنافسين.
-- **Agent** — الوكيل الرئيسي لتنفيذ الخطط والمهام.
-- **Memory** — ذاكرة تشغيلية للمشاريع والقرارات.
+- **Web:** https://jazal.vercel.app
+- **Firebase:** `jazal-audio`
+- **Bundle ID:** `iq.jeeltech.jazal`
 
 ## التشغيل
-المشروع مصمم ليعمل مباشرة على Vercel بدون قاعدة بيانات في النسخة الأولى. البيانات التجريبية تحفظ محلياً، وواجهة الوكيل جاهزة للربط مع مزود AI عبر `/api/agent` عند إضافة مفتاح API في Vercel.
 
-## مبدأ النظام
-JODA OS لا يستبدل قرار المالك. الوكيل يقترح، يحلل، يخطط، ويطلب موافقة قبل العمليات الحساسة مثل النشر، الإنفاق، حذف البيانات أو إرسال رسائل خارجية.
+```bash
+npm install
+npm run dev
+```
+
+## فحوصات الإنتاج
+
+```bash
+npm run build
+npm run lint
+npm run typecheck
+```
+
+## Firebase
+
+1. فعّل Email/Password في Authentication
+2. انسخ `firebase/firestore.rules` إلى Firestore Rules
+3. انسخ `firebase/storage.rules` إلى Storage Rules
+4. من **استوديو الإدارة → Firebase** أنشئ حساب الأدمن وارفع المحتوى
+
+## Capacitor (iOS / Android)
+
+```bash
+npm install
+npx cap add ios
+npx cap add android
+npm run cap:sync
+npm run cap:open:ios
+npm run cap:open:android
+```
+
+## النشر
+
+- **Web:** اربط المستودع بمشروع Vercel `JAZAL` أو `vercel deploy --prod`
+- **iOS:** Xcode → Archive → App Store Connect
+- **Android:** Android Studio → Generate Signed Bundle → Google Play
+
+## الصفحات
+
+Home · Library · Story Details · Player · FM · Submit · Account · Admin · Privacy · Terms · Support · About · Plans
+
+## الأمان
+
+- قراءة المحتوى عامة
+- الكتابة على Firestore/Storage للأدمن فقط (`request.auth != null`)
+- لوحة الإدارة محمية بتسجيل Firebase Auth

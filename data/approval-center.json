@@ -1,8 +1,0 @@
-{
-  "version":"0.1",
-  "updated":"2026-08-22",
-  "requests":[],
-  "statuses":["pending","approved","rejected","expired"],
-  "approvalRules":["production","deployment","spending","contracts","external messages","deletion","security/account changes"],
-  "policy":"Approval only authorizes the requested action; execution and verification must still be recorded in the execution ledger."
-}
