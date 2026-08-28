@@ -4,6 +4,9 @@ node_modules/
 .env
 .env.*
 !.env.example
+serviceAccount.json
+firebase/serviceAccount.json
+firebase/*-firebase-adminsdk*.json
 ios/App/Pods/
 ios/App/build/
 android/.gradle/

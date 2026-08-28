@@ -8,6 +8,9 @@
     "build": "node scripts/copy-www.js && node scripts/build-check.js",
     "lint": "node scripts/lint-check.js",
     "typecheck": "node scripts/typecheck.js",
+    "security": "node scripts/security-check.js",
+    "firebase:deploy:rules": "firebase deploy --only firestore:rules,storage --project jazal-audio",
+    "admin:claim": "node firebase/set-admin-claim.js",
     "cap:sync": "npx cap sync",
     "cap:open:ios": "npx cap open ios",
     "cap:open:android": "npx cap open android",
@@ -24,6 +27,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^6.2.0",
+    "firebase-tools": "^15.28.2",
     "serve": "^14.2.4"
   },
   "engines": {
