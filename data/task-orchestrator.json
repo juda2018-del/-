@@ -1,9 +1,0 @@
-{
-  "version":"0.1",
-  "updated":"2026-08-22",
-  "status":"ready",
-  "workflow":["decision","decompose","sequence","check_dependencies","approval_gate","execute","verify","learn"],
-  "rules":{"maxParallel":3,"blockedTasksPauseDependents":true,"sensitiveTasksRequireApproval":true},
-  "examplePlan":{"goal":"FUSE launch readiness","tasks":[{"id":"FUSE-01","title":"Audit iPhone account flow","priority":"P0","dependsOn":[],"approval":false},{"id":"FUSE-02","title":"Fix remaining UX blocker","priority":"P0","dependsOn":["FUSE-01"],"approval":false},{"id":"FUSE-03","title":"End-to-end order test","priority":"P0","dependsOn":["FUSE-02"],"approval":false},{"id":"FUSE-04","title":"Production release","priority":"P0","dependsOn":["FUSE-03"],"approval":true}]},
-  "policy":"The orchestrator plans and sequences work; it does not bypass approval gates or claim completion without verification evidence."
-}

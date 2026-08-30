@@ -1,0 +1,19 @@
+{
+  "name": "جَزَل - بودكاست وقصص صوتية",
+  "short_name": "جَزَل",
+  "description": "جَزَل — اسمع القصة للآخر",
+  "start_url": "./index.html?v=jazal-launch-v1",
+  "display": "standalone",
+  "background_color": "#070714",
+  "theme_color": "#09091a",
+  "dir": "rtl",
+  "lang": "ar",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

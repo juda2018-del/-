@@ -1,9 +1,0 @@
-{
-  "generatedAt": "2026-08-22",
-  "opportunities": [
-    {"id":"b2b-sales-agent","title":"وكيل مبيعات للشركات العراقية","category":"B2B AI","score":87,"capital":"low","speed":"fast","thesis":"أتمتة متابعة العملاء والعروض والمبيعات للشركات الصغيرة والمتوسطة"},
-    {"id":"smart-restaurants","title":"منصة إدارة المطاعم الذكية","category":"FoodTech","score":82,"capital":"medium","speed":"medium","thesis":"تشغيل الطلبات والمخزون والتسويق والتحليلات من لوحة واحدة"},
-    {"id":"inventory-gulf","title":"AI Inventory للعراق والخليج","category":"Retail AI","score":79,"capital":"medium","speed":"medium","thesis":"تحويل الفيديو إلى جرد ومراقبة رفوف ومخزون"},
-    {"id":"invoice-debt","title":"منصة SaaS للفواتير والديون","category":"FinTech","score":76,"capital":"low","speed":"fast","thesis":"إدارة الفواتير والتحصيل والتنبيهات للشركات"}
-  ]
-}

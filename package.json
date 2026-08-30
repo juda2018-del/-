@@ -1,6 +1,37 @@
 {
-  "name": "joda-os",
+  "name": "jazal",
   "version": "1.0.0",
   "private": true,
-  "scripts": {"dev": "vercel dev", "build": "echo JODA OS static build ready"}
+  "description": "جَزَل — بودكاست وقصص صوتية",
+  "scripts": {
+    "dev": "npx serve . -p 3000",
+    "build": "node scripts/copy-www.js && node scripts/build-check.js",
+    "lint": "node scripts/lint-check.js",
+    "typecheck": "node scripts/typecheck.js",
+    "security": "node scripts/security-check.js",
+    "launch": "npm run build && npm run lint && npm run typecheck && npm run security",
+    "firebase:deploy:rules": "firebase deploy --only firestore:rules,storage --project jazal-audio",
+    "admin:claim": "node firebase/set-admin-claim.js",
+    "cap:sync": "npx cap sync",
+    "cap:open:ios": "npx cap open ios",
+    "cap:open:android": "npx cap open android",
+    "cap:copy": "npx cap copy"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/app": "^6.0.2",
+    "@capacitor/core": "^6.2.0",
+    "@capacitor/haptics": "^6.0.2",
+    "@capacitor/ios": "^6.2.0",
+    "@capacitor/splash-screen": "^6.0.3",
+    "@capacitor/status-bar": "^6.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.0",
+    "firebase-tools": "^15.28.2",
+    "serve": "^14.2.4"
+  },
+  "engines": {
+    "node": ">=18"
+  }
 }

@@ -1,0 +1,35 @@
+{
+  "appId": "iq.jeeltech.jazal",
+  "appName": "JAZAL",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https",
+    "iosScheme": "https",
+    "hostname": "jazal.vercel.app",
+    "allowNavigation": [
+      "jazal.vercel.app",
+      "jazal-audio.firebaseapp.com",
+      "firebasestorage.googleapis.com",
+      "www.gstatic.com"
+    ]
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#070714",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#09091a"
+    }
+  },
+  "ios": {
+    "contentInset": "automatic",
+    "backgroundColor": "#070714"
+  },
+  "android": {
+    "backgroundColor": "#070714",
+    "allowMixedContent": false
+  }
+}

@@ -1,19 +1,103 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#07111f"><title>JODA OS — Master Agent</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#09091a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="جَزَل" />
+  <meta name="description" content="جَزَل — بودكاست وقصص صوتية عراقية. اسمع القصة للآخر." />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="ar_IQ" />
+  <meta property="og:site_name" content="جَزَل" />
+  <meta property="og:title" content="جَزَل | بودكاست وقصص صوتية" />
+  <meta property="og:description" content="اسمع القصة للآخر — قصص صوتية، بودكاست، وجَزَل FM مباشر." />
+  <meta property="og:url" content="https://jazal.vercel.app/" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="جَزَل | بودكاست وقصص صوتية" />
+  <meta name="twitter:description" content="اسمع القصة للآخر — قصص صوتية عراقية." />
+  <title>جَزَل | بودكاست وقصص صوتية</title>
+  <link rel="manifest" href="manifest.json?v=jazal-launch-v1" />
+  <link rel="icon" href="assets/icon.svg?v=jazal-launch-v1" />
+  <link rel="apple-touch-icon" href="assets/icon.svg?v=jazal-launch-v1" />
+  <link rel="stylesheet" href="styles.css?v=jazal-launch-v1" />
 </head>
 <body>
-  <aside class="sidebar">
-    <div class="brand"><div class="logo">J</div><div><b>JODA OS</b><span>MASTER AGENT</span></div></div>
-    <nav>
-      <button class="nav active" data-view="home">⌂ <span>مركز القيادة</span></button><button class="nav" data-view="portfolio">◈ <span>المحفظة</span></button><button class="nav" data-view="opportunities">✦ <span>الفرص</span></button><button class="nav" data-view="builder">＋ <span>بناء شركة</span></button><button class="nav" data-view="growth">↗ <span>النمو</span></button><button class="nav" data-view="research">⌕ <span>الأبحاث</span></button><button class="nav" data-view="plans">☷ <span>خطط التنفيذ</span></button>
+  <div class="app-backdrop" aria-hidden="true"></div>
+  <div class="phone-shell">
+    <header class="topbar">
+      <button class="round-btn ghost" id="menuBtn" aria-label="فتح القائمة">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+
+      <button class="brand-mini" data-view="home" aria-label="العودة إلى الرئيسية">
+        <img src="assets/jazal-mark.svg?v=jazal-launch-v1" alt="" />
+        <span>
+          <strong>جَزَل</strong>
+          <small>اسمع القصة للآخر</small>
+        </span>
+      </button>
+
+      <button class="round-btn ghost" id="searchBtn" aria-label="البحث">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+      </button>
+    </header>
+
+    <main id="app" class="app" aria-live="polite"></main>
+
+    <section id="miniPlayer" class="mini-player hidden" aria-label="المشغل المصغر"></section>
+
+    <nav class="bottom-nav" aria-label="التنقل الرئيسي">
+      <button data-view="home" class="active">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/></svg>
+        <small>الرئيسية</small>
+      </button>
+      <button data-view="library">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="7" rx="2"/><rect x="14" y="4" width="6" height="7" rx="2"/><rect x="4" y="15" width="6" height="5" rx="2"/><rect x="14" y="15" width="6" height="5" rx="2"/></svg>
+        <small>المكتبة</small>
+      </button>
+      <button data-view="fm" class="nav-fm">
+        <span class="nav-fm-orb"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V7a3 3 0 0 1 6 0v11"/><rect x="6" y="10" width="12" height="8" rx="6"/><path d="M12 18v3M9 21h6"/></svg></span>
+        <small>FM</small>
+      </button>
+      <button data-view="submit">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>
+        <small>قصتك</small>
+      </button>
+      <button data-view="account">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+        <small>حسابي</small>
+      </button>
     </nav>
-    <div class="agent-status"><i></i><div><b>الوكيل متصل</b><small>جاهز للتنفيذ</small></div></div>
-  </aside>
-  <main><header><div><p class="eyebrow">JODA COMMAND CENTER</p><h1 id="title">مركز القيادة</h1></div><div class="header-actions"><button id="refresh">تحديث</button><button class="primary" id="agentBtn">✦ اسأل الوكيل</button></div></header><section id="app"></section></main>
-  <div class="modal hidden" id="modal"><div class="modal-card"><button class="close" id="close">×</button><p class="eyebrow">MASTER AGENT</p><h2>شنو تريد من JODA؟</h2><textarea id="prompt" placeholder="مثلاً: حلل مشاريعي واقترحلي شركة جديدة مربحة بالعراق..."></textarea><button class="primary wide" id="run">تشغيل الوكيل ✦</button><div id="answer"></div></div></div>
-  <script src="app.js"></script>
-</body></html>
+
+    <aside id="drawer" class="drawer hidden" aria-hidden="true">
+      <div class="drawer-card">
+        <div class="drawer-head">
+          <div class="drawer-brand">
+            <img src="assets/jazal-mark.svg?v=jazal-launch-v1" alt="شعار جَزَل" />
+            <div><strong>جَزَل</strong><small>بودكاست وقصص صوتية</small></div>
+          </div>
+          <button class="round-btn ghost drawer-close" id="closeDrawer" aria-label="إغلاق القائمة">×</button>
+        </div>
+        <div class="drawer-links">
+          <button data-view="home">الرئيسية <span>‹</span></button>
+          <button data-view="library">المكتبة والتصنيفات <span>‹</span></button>
+          <button data-view="fm">جَزَل FM مباشر <span>‹</span></button>
+          <button data-view="submit">احچي قصتك <span>‹</span></button>
+          <button data-view="plans">الباقات <em>قريباً</em></button>
+          <button data-view="about">عن جَزَل <span>‹</span></button>
+          <button data-view="support">تواصل ودعم <span>‹</span></button>
+          <button data-view="privacy">الخصوصية <span>‹</span></button>
+          <button data-view="terms">الشروط <span>‹</span></button>
+          <button data-view="admin">استوديو الإدارة <span>‹</span></button>
+        </div>
+        <p class="drawer-foot">جَزَل · اسمع القصة للآخر</p>
+      </div>
+    </aside>
+  </div>
+
+  <script type="module" src="app.js?v=jazal-launch-v1"></script>
+</body>
+</html>
