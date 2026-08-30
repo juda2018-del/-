@@ -15,8 +15,20 @@ const REPO = process.env.VERCEL_GIT_REPO || 'juda2018-del/-';
 const REPO_ID = Number(process.env.GITHUB_REPO_ID || '1256517499');
 const PRODUCTION_BRANCH = process.env.VERCEL_PRODUCTION_BRANCH || 'main';
 
-if (!TOKEN) {
-  console.error('Missing VERCEL_TOKEN. Create one at https://vercel.com/account/tokens');
+function tokenLooksInvalid(value) {
+  if (!value) return true;
+  // Anonymous claim tokens (vcn_*) expire and cannot call the Vercel API.
+  if (value.startsWith('vcn_')) return true;
+  return false;
+}
+
+if (!TOKEN || tokenLooksInvalid(TOKEN)) {
+  if (TOKEN?.startsWith('vcn_')) {
+    console.error('VERCEL_TOKEN looks like an expired anonymous claim token (vcn_*).');
+    console.error('Create a real API token: https://vercel.com/account/tokens');
+  } else {
+    console.error('Missing VERCEL_TOKEN. Create one at https://vercel.com/account/tokens');
+  }
   process.exit(1);
 }
 

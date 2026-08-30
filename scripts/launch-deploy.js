@@ -29,11 +29,21 @@ async function verifyVercel(url = 'https://jazal.vercel.app') {
   }
 }
 
+function tokenLooksInvalid(value) {
+  if (!value) return true;
+  return value.startsWith('vcn_');
+}
+
 async function main() {
   console.log('JAZAL auto-deploy');
   let deployed = false;
 
-  if (process.env.VERCEL_TOKEN && process.env.VERCEL_ORG_ID) {
+  if (process.env.VERCEL_TOKEN?.startsWith('vcn_')) {
+    console.warn('⚠ VERCEL_TOKEN is an anonymous claim token (vcn_*) — ignored.');
+    console.warn('  Replace with API token: https://vercel.com/account/tokens');
+  }
+
+  if (process.env.VERCEL_TOKEN && process.env.VERCEL_ORG_ID && !tokenLooksInvalid(process.env.VERCEL_TOKEN)) {
     deployed = run('node', ['scripts/vercel-link.js'], 'Vercel API link + production deploy') || deployed;
   }
 
