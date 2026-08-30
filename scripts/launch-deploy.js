@@ -56,6 +56,12 @@ async function main() {
     run('npm', ['run', 'firebase:deploy:hosting'], 'Firebase hosting') || deployed;
   }
 
+  if (!deployed) {
+    console.log('\n→ Publishing temporary preview (no production credentials)...');
+    const preview = spawnSync('node', ['scripts/deploy-preview.js'], { stdio: 'inherit', env: process.env, shell: false });
+    if (preview.status === 0) deployed = true;
+  }
+
   await verifyVercel();
 
   if (!deployed) {
