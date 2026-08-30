@@ -1,0 +1,8 @@
+{
+  "name": "JAZAL",
+  "install": "npm ci\nnpm run launch",
+  "start": "npm run dev",
+  "ports": [
+    { "name": "web", "port": 3000 }
+  ]
+}
