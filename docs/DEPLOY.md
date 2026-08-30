@@ -1,5 +1,23 @@
 # JAZAL Production Deploy
 
+## 0. Auto deploy (Cloud Agent / CI)
+
+When secrets are available in the environment:
+
+```bash
+npm run deploy:auto
+```
+
+Required secrets (add in **Cursor → Cloud Agent → Environment → Secrets**):
+
+| Secret | Purpose |
+|--------|---------|
+| `VERCEL_TOKEN` | Vercel API token |
+| `VERCEL_ORG_ID` | Team juda12 ID (`team_…`) |
+| `VERCEL_PROJECT_ID` | `prj_eAIzDeZ40S23Cf1bnLq91FVstQf0` (optional, has default) |
+| `VERCEL_DEPLOY_HOOK` | Redeploy after Git is linked |
+| `GOOGLE_APPLICATION_CREDENTIALS` | Path to Firebase service account JSON |
+
 ## 1. Vercel (Web)
 
 Current production: https://jazal.vercel.app
