@@ -1,5 +1,5 @@
-const CACHE_NAME = 'jazal-aurora-v2-cache';
-const V = 'jazal-aurora-v2';
+const CACHE_NAME = 'jazal-fusion-v3-cache';
+const V = 'jazal-fusion-v3';
 const COVERS = ['old-door','river-secret','last-call','love-alley','hotel-17','case-qasr','jazal-talk','maqam-night','kids-night']
   .map(id => `./assets/covers/${id}.svg?v=${V}`);
 const ASSETS = [
