@@ -1,0 +1,87 @@
+#!/usr/bin/env node
+/**
+ * Link GitHub repo to existing Vercel JAZAL project and configure build settings.
+ *
+ * Usage:
+ *   VERCEL_TOKEN=xxx VERCEL_ORG_ID=team_xxx node scripts/vercel-link.js
+ *
+ * Get token: https://vercel.com/account/tokens
+ * Get org id: Vercel → Team Settings → General (or `vercel teams ls`)
+ */
+const PROJECT_ID = process.env.VERCEL_PROJECT_ID || 'prj_eAIzDeZ40S23Cf1bnLq91FVstQf0';
+const TEAM_ID = process.env.VERCEL_ORG_ID || '';
+const TOKEN = process.env.VERCEL_TOKEN;
+const REPO = process.env.VERCEL_GIT_REPO || 'juda2018-del/-';
+const PRODUCTION_BRANCH = process.env.VERCEL_PRODUCTION_BRANCH || 'main';
+
+if (!TOKEN) {
+  console.error('Missing VERCEL_TOKEN. Create one at https://vercel.com/account/tokens');
+  process.exit(1);
+}
+
+function apiUrl(path) {
+  const base = `https://api.vercel.com${path}`;
+  if (!TEAM_ID) return base;
+  const sep = base.includes('?') ? '&' : '?';
+  return `${base}${sep}teamId=${encodeURIComponent(TEAM_ID)}`;
+}
+
+async function vercel(path, { method = 'GET', body } = {}) {
+  const res = await fetch(apiUrl(path), {
+    method,
+    headers: {
+      Authorization: `Bearer ${TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data?.error?.message || data?.message || `HTTP ${res.status}`);
+    err.data = data;
+    throw err;
+  }
+  return data;
+}
+
+async function main() {
+  console.log(`Linking ${REPO} → project ${PROJECT_ID} (branch: ${PRODUCTION_BRANCH})`);
+
+  await vercel(`/v9/projects/${PROJECT_ID}`, {
+    method: 'PATCH',
+    body: {
+      buildCommand: 'npm run build',
+      outputDirectory: 'www',
+      framework: null,
+      rootDirectory: null,
+    },
+  });
+  console.log('Updated build settings: npm run build → www/');
+
+  await vercel(`/v9/projects/${PROJECT_ID}/link`, {
+    method: 'POST',
+    body: { type: 'github', repo: REPO },
+  });
+  console.log('GitHub repository linked.');
+
+  const deploy = await vercel('/v13/deployments', {
+    method: 'POST',
+    body: {
+      name: 'jazal',
+      project: PROJECT_ID,
+      target: 'production',
+      gitSource: {
+        type: 'github',
+        ref: PRODUCTION_BRANCH,
+        repoId: REPO,
+      },
+    },
+  });
+  console.log('Production deployment triggered:', deploy.url || deploy.id);
+}
+
+main().catch(err => {
+  console.error('Vercel link failed:', err.message);
+  if (err.data) console.error(JSON.stringify(err.data, null, 2));
+  process.exit(1);
+});
