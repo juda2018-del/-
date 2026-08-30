@@ -1,0 +1,26 @@
+name: Vercel Deploy Hook
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: vercel-deploy-hook
+  cancel-in-progress: true
+
+jobs:
+  redeploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Vercel production deploy
+        env:
+          VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$VERCEL_DEPLOY_HOOK" ]; then
+            echo "::notice::VERCEL_DEPLOY_HOOK not set — skip auto redeploy."
+            echo "After linking Git in Vercel, add a Deploy Hook secret. See docs/DEPLOY.md"
+            exit 0
+          fi
+          curl -fsS -X POST "$VERCEL_DEPLOY_HOOK"
+          echo "Vercel production redeploy triggered."

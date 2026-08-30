@@ -57,7 +57,10 @@ npm run cap:open:android  # Android Studio → Signed AAB
 
 ## النشر
 
-- **Web:** اربط فرع `cursor/jazal-production-ready-c37b` بمشروع Vercel `JAZAL`
+راجع `docs/DEPLOY.md` للتفاصيل الكاملة.
+
+- **Web (Vercel):** https://jazal.vercel.app — اربط `main` بمشروع **JAZAL** على فريق **juda12**
+- **Web (Firebase Hosting):** `npm run firebase:deploy:hosting` → `https://jazal-audio.web.app`
 - **iOS:** Xcode → Archive → App Store Connect (`iq.jeeltech.jazal`)
 - **Android:** Generate Signed Bundle → Google Play
 
