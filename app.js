@@ -177,8 +177,8 @@ const baseStories = [
 const defaultState = {
   contentVersion:'jazal-final-ui-font-audio-complete',
   currentView:'home', filter:'الكل', query:'', favorites:['old-door'], recent:['old-door','river-secret'],
-  player:{playing:false, kind:'episode', title:'الليلة الأولى', subtitle:'الباب القديم · صوت تجريبي شغال', storyId:'old-door', episodeId:'old-door-1', audioSrc:DEMO_AUDIO_SRC, progress:0, duration:755, speed:'1x'},
-  fm:{live:true, title:'ليالي جزل', host:'ستوديو جزل', note:'بث تجريبي مباشر للحكايات والحوارات الصوتية', listeners:128, streamUrl:DEMO_AUDIO_SRC},
+  player:{playing:false, kind:'episode', title:'الليلة الأولى', subtitle:'الباب القديم · رعب', storyId:'old-door', episodeId:'old-door-1', audioSrc:DEMO_AUDIO_SRC, progress:0, duration:755, speed:'1x'},
+  fm:{live:true, title:'ليالي جَزَل', host:'ستوديو جَزَل', note:'بث مباشر للحكايات والحوارات الصوتية', listeners:128, streamUrl:DEMO_AUDIO_SRC},
   user:{name:'مستمع جزل', logged:true},
   submissions:[], mySubmissions:[], stories:baseStories,
   firebase:{mode:'firebase', projectId:'jazal-audio', authDomain:firebaseConfig.authDomain, firestoreReady:true, live:false, signedIn:false, isAdmin:false, authEmail:'', lastSync:'', error:'', cloudStatus:'جاهز'},
@@ -285,9 +285,12 @@ function syncHash(view){
   if(view.startsWith('detail:')) location.hash=`detail/${view.split(':')[1]}`;
   else location.hash=map[view]||'';
 }
-function slugify(text=''){
-  return String(text).trim().toLowerCase().replace(/[^\w\u0600-\u06FF]+/g,'-').replace(/^-+|-+$/g,'').slice(0,48)||('story-'+Date.now());
+function appBaseUrl(){
+  const origin=location?.origin;
+  return origin && origin !== 'null' ? origin : 'https://jazal.vercel.app';
 }
+function storyShareUrl(id){ return `${appBaseUrl()}/#/detail/${id}`; }
+function appShareUrl(){ return `${appBaseUrl()}/`; }
 function storyEpisodeCount(story){ return story.episodeList?.length || story.episodes || 0; }
 function coverSrc(story){ return `assets/covers/${story.id}.svg?v=jazal-launch-v1`; }
 function availableAudio(src){ return src && String(src).trim() ? String(src).trim() : DEMO_AUDIO_SRC; }
@@ -437,9 +440,9 @@ function submitView(){
 
 function plansView(){ return `<h1 class="page-title">الباقات</h1><p class="page-subtitle">الاشتراكات حالياً <b class="gold">قريباً</b>. نخلي الصفحة جاهزة حتى من نفعّل الدفع تنضاف بدون تغيير كبير.</p><div class="plan active-plan"><div class="row"><h3>مجاني</h3><span class="soon">مفعل</span></div><ul><li>تشغيل الحلقات المجانية</li><li>جزل FM مباشر</li><li>إرسال قصتك</li></ul></div><div class="plan"><div class="row"><h3>شهري</h3><span class="soon">قريباً</span></div><ul><li>كل الحلقات</li><li>بدون إعلانات</li><li>مسلسلات جزل Originals</li></ul></div><div class="plan"><div class="row"><h3>VIP</h3><span class="soon">قريباً</span></div><ul><li>حلقات قبل الجميع</li><li>بث خاص</li><li>محتوى حصري</li></ul></div>`; }
 
-function aboutView(){ return `<h1 class="page-title">عن جزل</h1><p class="page-subtitle">جزل منصة بودكاست وقصص صوتية عراقية، تجمع الحكايات، المسلسلات، البث المباشر، وقصص الجمهور بصوت واحد.</p><div class="legal-card"><h2>الفكرة</h2><p>نحوّل القصص إلى تجربة صوتية سهلة، سريعة، وتبقى وياك حتى بعد قفل شاشة الموبايل.</p><ul><li>بودكاست وقصص صوتية</li><li>جزل FM مباشر</li><li>قصص جمهور قابلة للتحويل لحلقات</li><li>باقات قريباً</li></ul></div><div class="cta-row"><button class="primary" data-view="library">ابدأ الاستماع</button><button class="secondary" data-view="support">تواصل ويانا</button></div>`; }
-function privacyView(){ return `<h1 class="page-title">سياسة الخصوصية</h1><p class="page-subtitle">نسخة أولية لمرحلة الإطلاق التجريبي.</p><div class="legal-card"><h2>البيانات</h2><p>قد نحفظ بيانات بسيطة مثل القصص المرسلة من المستخدم، حالة المفضلة، وسجل التشغيل على الجهاز أو Firebase عند استخدام الإدارة.</p><h2>قصص الجمهور</h2><p>أي قصة ترسلها عبر “احچي قصتك” تُستخدم للمراجعة وقد تُحوّل إلى محتوى بعد الموافقة والتحرير.</p><h2>الحسابات</h2><p>حسابات الإدارة تستخدم Firebase Authentication ولا نطلب مفاتيح خاصة من المستخدمين.</p><h2>التواصل</h2><p>لأي حذف أو تعديل محتوى، راسلنا من صفحة الدعم.</p></div>`; }
-function termsView(){ return `<h1 class="page-title">شروط الاستخدام</h1><p class="page-subtitle">استخدام جزل يعني قبول هذه الشروط الأولية.</p><div class="legal-card"><h2>المحتوى</h2><p>المحتوى التجريبي داخل التطبيق للعرض والتطوير، ولا يمثل إطلاقاً تجارياً نهائياً.</p><h2>الإرسال</h2><p>عند إرسال قصة، تؤكد أنها تخصك أو لديك حق مشاركتها، وأنها لا تحتوي إساءة أو معلومات حساسة عن أشخاص بدون إذن.</p><h2>الباقات</h2><p>الباقات والاشتراكات حالياً “قريباً” ولا يوجد دفع فعلي داخل النسخة الحالية.</p><h2>الإدارة</h2><p>لوحة الإدارة مخصصة لفريق جزل فقط.</p></div>`; }
+function aboutView(){ return `<h1 class="page-title">عن جَزَل</h1><p class="page-subtitle">جَزَل منصة بودكاست وقصص صوتية عراقية، تجمع الحكايات، المسلسلات، البث المباشر، وقصص الجمهور بصوت واحد.</p><div class="legal-card"><h2>الفكرة</h2><p>نحوّل القصص إلى تجربة صوتية سهلة، سريعة، وتبقى وياك حتى بعد قفل شاشة الموبايل.</p><ul><li>بودكاست وقصص صوتية</li><li>جَزَل FM مباشر</li><li>قصص جمهور قابلة للتحويل لحلقات</li><li>باقات قريباً</li></ul></div><div class="cta-row"><button class="primary" data-view="library">ابدأ الاستماع</button><button class="secondary" data-view="support">تواصل ويانا</button></div>`; }
+function privacyView(){ return `<h1 class="page-title">سياسة الخصوصية</h1><p class="page-subtitle">آخر تحديث: إطلاق جَزَل الأول.</p><div class="legal-card"><h2>البيانات</h2><p>قد نحفظ بيانات بسيطة مثل القصص المرسلة من المستخدم، حالة المفضلة، وسجل التشغيل على الجهاز. بيانات الإدارة والمحتوى تُدار عبر Firebase.</p><h2>قصص الجمهور</h2><p>أي قصة ترسلها عبر “احچي قصتك” تُستخدم للمراجعة وقد تُحوّل إلى محتوى بعد الموافقة والتحرير.</p><h2>الحسابات</h2><p>حسابات الإدارة تستخدم Firebase Authentication. لا نطلب مفاتيح خاصة من المستخدمين العاديين.</p><h2>التواصل</h2><p>لأي حذف أو تعديل محتوى، راسلنا على <a href="mailto:support@jazal.app">support@jazal.app</a> أو من صفحة الدعم.</p></div>`; }
+function termsView(){ return `<h1 class="page-title">شروط الاستخدام</h1><p class="page-subtitle">استخدام جَزَل يعني قبول هذه الشروط.</p><div class="legal-card"><h2>المحتوى</h2><p>المحتوى المعروض داخل جَزَل مخصص للاستماع الشخصي. يُمنع إعادة نشره أو بيعه دون إذن.</p><h2>الإرسال</h2><p>عند إرسال قصة، تؤكد أنها تخصك أو لديك حق مشاركتها، وأنها لا تحتوي إساءة أو معلومات حساسة عن أشخاص بدون إذن.</p><h2>الباقات</h2><p>الباقات والاشتراكات حالياً “قريباً” ولا يوجد دفع فعلي داخل النسخة الحالية.</p><h2>الإدارة</h2><p>لوحة الإدارة مخصصة لفريق جَزَل فقط.</p></div>`; }
 function supportView(){ return `<h1 class="page-title">تواصل ودعم</h1><p class="page-subtitle">للشكاوى، الدعم، التعاون، أو اقتراح قصة.</p><div class="support-card"><b>دعم جَزَل</b><p class="muted">فريق جَزَل جاهز يساعدك بالمحتوى، التقنية، أو التعاون.</p><div class="support-links"><a class="support-link" href="mailto:support@jazal.app"><div><b>البريد الإلكتروني</b><small>support@jazal.app</small></div><span>‹</span></a><button class="support-link" data-share-app><div><b>مشاركة التطبيق</b><small>أرسل رابط جَزَل لصديق</small></div><span>‹</span></button><button class="support-link" data-view="submit"><div><b>اقترح قصة</b><small>احچي قصتك من داخل التطبيق</small></div><span>‹</span></button></div></div><div class="legal-links"><button data-view="about">عن جَزَل</button><button data-view="privacy">الخصوصية</button><button data-view="terms">الشروط</button></div>`; }
 
 function accountView(){
@@ -938,13 +941,13 @@ function deleteSchedule(index){
   state.schedule.splice(index,1); save(); cloudSaveSoon('delete-schedule'); toast('انحذف الموعد'); render();
 }
 async function shareApp(){
-  const data={title:'جزل', text:'جزل — اسمع القصة للآخر', url:'https://jazal.vercel.app'};
-  try{ if(navigator.share) await navigator.share(data); else { await navigator.clipboard?.writeText(data.url); toast('تم نسخ رابط جزل'); } }catch(e){}
+  const data={title:'جَزَل', text:'جَزَل — اسمع القصة للآخر', url:appShareUrl()};
+  try{ if(navigator.share) await navigator.share(data); else { await navigator.clipboard?.writeText(data.url); toast('تم نسخ رابط جَزَل'); } }catch(e){}
 }
 async function shareStory(id){
   const story=getStory(id); if(!story) return;
-  const url='https://jazal.vercel.app'; const text=`${story.title} على جزل — اسمع القصة للآخر`;
-  try{ if(navigator.share) await navigator.share({title:story.title,text,url}); else { await navigator.clipboard?.writeText(`${text} ${url}`); toast('تم نسخ رابط القصة'); } }catch(e){}
+  const url=storyShareUrl(story.id); const text=`${story.title} على جَزَل — اسمع القصة للآخر`;
+  try{ if(navigator.share) await navigator.share({title:story.title,text,url}); else { await navigator.clipboard?.writeText(`${text}\n${url}`); toast('تم نسخ رابط القصة'); } }catch(e){}
 }
 
 async function markSubmission(index,status){

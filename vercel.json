@@ -3,6 +3,9 @@
   "name": "jazal",
   "buildCommand": "npm run build",
   "outputDirectory": "www",
+  "rewrites": [
+    { "source": "/((?!assets/|sw.js|manifest.json|robots.txt|firebase/).*)", "destination": "/index.html" }
+  ],
   "headers": [
     {
       "source": "/(.*)",

@@ -9,6 +9,7 @@
     "lint": "node scripts/lint-check.js",
     "typecheck": "node scripts/typecheck.js",
     "security": "node scripts/security-check.js",
+    "launch": "npm run build && npm run lint && npm run typecheck && npm run security",
     "firebase:deploy:rules": "firebase deploy --only firestore:rules,storage --project jazal-audio",
     "admin:claim": "node firebase/set-admin-claim.js",
     "cap:sync": "npx cap sync",

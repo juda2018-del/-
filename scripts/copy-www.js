@@ -4,7 +4,7 @@ const path = require('path');
 const root = path.join(__dirname, '..');
 const out = path.join(root, 'www');
 const copyItems = [
-  'index.html', 'app.js', 'styles.css', 'sw.js', 'manifest.json', 'assets', 'firebase'
+  'index.html', 'app.js', 'styles.css', 'sw.js', 'manifest.json', 'robots.txt', 'assets', 'firebase'
 ];
 
 if (fs.existsSync(out)) fs.rmSync(out, { recursive: true, force: true });
