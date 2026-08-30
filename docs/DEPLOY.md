@@ -108,7 +108,13 @@ curl -s https://jazal.vercel.app/app.js | rg "jazal-launch-v1"
 # should match
 ```
 
-## 1b. Firebase Hosting (alternative web URL)
+## 1b. GitHub Pages (auto on push to main)
+
+After merging, enable **Settings → Pages → Source: GitHub Actions**.
+
+Live URL: **https://juda2018-del.github.io/-/**
+
+## 1c. Firebase Hosting (alternative web URL)
 
 If Vercel is not linked yet, you can publish the same build to Firebase:
 

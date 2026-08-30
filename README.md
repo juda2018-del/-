@@ -60,6 +60,7 @@ npm run cap:open:android  # Android Studio → Signed AAB
 راجع `docs/DEPLOY.md` للتفاصيل الكاملة.
 
 - **Web (Vercel):** https://jazal.vercel.app — اربط `main` بمشروع **JAZAL** على فريق **juda12**
+- **Web (GitHub Pages):** https://juda2018-del.github.io/-/ — يُنشر تلقائياً من `main`
 - **Web (Firebase Hosting):** `npm run firebase:deploy:hosting` → `https://jazal-audio.web.app`
 - **iOS:** Xcode → Archive → App Store Connect (`iq.jeeltech.jazal`)
 - **Android:** Generate Signed Bundle → Google Play
