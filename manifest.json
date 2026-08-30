@@ -2,10 +2,10 @@
   "name": "جَزَل - بودكاست وقصص صوتية",
   "short_name": "جَزَل",
   "description": "جَزَل — اسمع القصة للآخر",
-  "start_url": "./index.html?v=jazal-launch-v1",
+  "start_url": "./index.html?v=jazal-aurora-v2",
   "display": "standalone",
-  "background_color": "#070714",
-  "theme_color": "#09091a",
+  "background_color": "#0c0e18",
+  "theme_color": "#0c0e18",
   "dir": "rtl",
   "lang": "ar",
   "icons": [
