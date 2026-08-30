@@ -9,19 +9,56 @@ The repo is configured for Vercel static output from `www/`:
 - `buildCommand`: `npm run build`
 - `outputDirectory`: `www`
 
-### Link GitHub branch to production
+### Option A — One-command link (recommended)
+
+1. Create token: https://vercel.com/account/tokens
+2. Copy Team ID from Vercel → Team **juda12** → Settings → General
+3. Run:
+
+```bash
+export VERCEL_TOKEN=your_token
+export VERCEL_ORG_ID=team_xxxxxxxx
+npm run vercel:link
+```
+
+This links `juda2018-del/-` to project `prj_eAIzDeZ40S23Cf1bnLq91FVstQf0` and triggers production deploy.
+
+### Option B — Vercel Dashboard (manual)
 
 1. Vercel Dashboard → Project **JAZAL** → Settings → Git
 2. Connect repository: `juda2018-del/-`
-3. Production Branch: `cursor/jazal-production-ready-c37b` (or merge PR #1 to `main` first)
-4. Redeploy production
+3. Production Branch: `main`
+4. Build Command: `npm run build`
+5. Output Directory: `www`
+6. Redeploy production
+
+### Option C — GitHub Actions
+
+Add repository secrets (Settings → Secrets and variables → Actions):
+
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID` = `prj_eAIzDeZ40S23Cf1bnLq91FVstQf0`
+
+Push to `main` runs `.github/workflows/vercel-production.yml` automatically.
+
+### Option D — Claim anonymous deploy (no token)
+
+If you cannot link Git yet, deploy from this repo and claim in Vercel:
+
+```bash
+npm run build
+npx vercel deploy --temporary --yes
+```
+
+Open the printed `claimUrl` while logged into team **juda12**, select project **JAZAL**, and assign to production domain `jazal.vercel.app`.
 
 ### CLI deploy (if logged in)
 
 ```bash
 npm install
 npm run build
-npx vercel link          # select existing JAZAL project
+npx vercel link
 npx vercel --prod
 ```
 
