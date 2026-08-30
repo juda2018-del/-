@@ -13,7 +13,7 @@ const firebaseConfig = {
   measurementId: "G-B36438FY9N"
 };
 
-const APP_VERSION = 'jazal-production-v1';
+const APP_VERSION = 'jazal-launch-v1';
 const FIRESTORE_RULES_TEXT = `rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -239,7 +239,7 @@ function nav(view){ state.currentView=view; syncHash(view); save(); render(); cl
 function setAdminTab(tab){ if(tab!=='firebase' && !isAdmin()) tab='firebase'; state.admin.tab=tab; save(); render(); }
 function isFav(id){ return state.favorites.includes(id); }
 function updateRecent(id){ state.recent=[id,...state.recent.filter(x=>x!==id)].slice(0,8); }
-function logoIcon(){ return `<img class="jazal-mark" src="assets/jazal-mark.svg?v=jazal-production-v1" alt="شعار جزل" />`; }
+function logoIcon(){ return `<img class="jazal-mark" src="assets/jazal-mark.svg?v=jazal-launch-v1" alt="شعار جزل" />`; }
 function getStory(id){ return state.stories.find(s=>s.id===id); }
 function getPublicStories(){ return state.stories.filter(s=>s.published!==false); }
 function normalizeStories(list){
@@ -289,7 +289,7 @@ function slugify(text=''){
   return String(text).trim().toLowerCase().replace(/[^\w\u0600-\u06FF]+/g,'-').replace(/^-+|-+$/g,'').slice(0,48)||('story-'+Date.now());
 }
 function storyEpisodeCount(story){ return story.episodeList?.length || story.episodes || 0; }
-function coverSrc(story){ return `assets/covers/${story.id}.svg?v=jazal-production-v1`; }
+function coverSrc(story){ return `assets/covers/${story.id}.svg?v=jazal-launch-v1`; }
 function availableAudio(src){ return src && String(src).trim() ? String(src).trim() : DEMO_AUDIO_SRC; }
 function isDemoAudio(src){ const value=availableAudio(src); return value===DEMO_AUDIO_SRC || /jazal-demo\.mp3(?:\?|$)/.test(value); }
 function storyUsesDemoAudio(story){ return (story?.episodeList||[]).every(ep=>isDemoAudio(ep.audioSrc)); }
@@ -306,7 +306,7 @@ function storyGradient(story){
   return map[story?.genre] || 'linear-gradient(145deg,#1b1640,#7c3aed 54%,#ec4899)';
 }
 function safeCover(story, cls=''){
-  if(!story) return `<img class="${cls}" src="assets/jazal-mark.svg?v=jazal-production-v1" alt="شعار جزل" />`;
+  if(!story) return `<img class="${cls}" src="assets/jazal-mark.svg?v=jazal-launch-v1" alt="شعار جزل" />`;
   return `<span class="cover-symbol" aria-hidden="true">${esc(story.emoji||'ج')}</span><img class="${cls}" src="${coverSrc(story)}" alt="غلاف ${esc(story.title)}" loading="lazy" onerror="this.style.display='none'" />`;
 }
 function formatSeconds(total){
@@ -347,7 +347,7 @@ function homeView(){
   const stories=getPublicStories();
   const featured=stories.find(s=>s.featured)||stories[0];
   const firstEpisode=featured?.episodeList?.[0];
-  const recentStories=state.recent.map(getStory).filter(Boolean).slice(0,4);
+  const recentStories=state.recent.map(getStory).filter(s=>s&&s.published!==false).slice(0,4);
   return `<section class="home-hero premium-hero">
     <div class="orbit o1"></div><div class="orbit o2"></div><div class="halo"></div>
     <div class="hero-topline"><span class="live-chip"><span class="pulse"></span>اختيار اليوم</span><span>بودكاست وقصص صوتية</span></div>
@@ -376,7 +376,7 @@ function homeView(){
     <button class="feature" data-filter="جريمة"><span>⌁</span><b>جريمة</b><small>تحقيق وتشويق</small></button>
     <button class="feature" data-view="submit"><span>✎</span><b>قصتك</b><small>احچيها إلنا</small></button>
   </div></section>
-  <section class="section"><div class="section-head"><h2>تابع الاستماع</h2><button data-view="player">فتح المشغل</button></div><div class="continue-card panel-card"><div><span class="soon">آخر تشغيل</span><h3>${esc(state.player.title)}</h3><p>${esc(state.player.subtitle)}</p></div><button class="play-orb small" data-mini-toggle>${state.player.playing?'Ⅱ':'▶'}</button><div class="progress"><span style="width:${state.player.progress}%"></span></div></div></section>
+  <section class="section"><div class="section-head"><h2>تابع الاستماع</h2><button data-view="player">فتح المشغل</button></div><div class="continue-card panel-card"><button class="play-orb small" data-mini-toggle aria-label="تشغيل أو إيقاف">${state.player.playing?'Ⅱ':'▶'}</button><div class="continue-body"><span class="soon">آخر تشغيل</span><h3>${esc(state.player.title)}</h3><p>${esc(state.player.subtitle)}</p><div class="progress"><span style="width:${state.player.progress}%"></span></div></div></div></section>
   <section class="section"><div class="section-head"><h2>الأكثر استماعاً</h2><button data-view="library">المكتبة</button></div><div class="grid">${stories.slice(0,4).map(s=>storyCard(s)).join('')}</div></section>
   <section class="section"><div class="section-head"><h2>نكمل من وين وقفت</h2><span class="soon">محفوظ</span></div><div class="horizontal-list">${recentStories.map(s=>storyCard(s,true)).join('') || `<div class="empty">بعدك ما شغلت قصص.</div>`}</div></section>`;
 }
@@ -401,13 +401,13 @@ function detailView(storyId){
   <div class="detail-meta panel-card"><div><strong>${episodes.length}</strong><small>حلقة</small></div><div><strong>${esc(story.duration)}</strong><small>مدة كلية</small></div><div><strong>${esc(story.listens)}</strong><small>استماع</small></div></div>
   <div class="cta-row"><button class="primary" data-play-episode="${story.id}|${episodes[0]?.id||''}">▶ تشغيل من البداية</button><button class="secondary" data-fav="${story.id}">${isFav(story.id)?'♥ محفوظ':'♡ حفظ'}</button><button class="secondary" data-share-story="${story.id}">مشاركة</button></div>
   <section class="section"><div class="section-head"><h2>الحلقات</h2><span class="soon">${story.free||0} مجانية</span></div><div class="panel-card episodes-card">
-  ${episodes.map((ep,i)=>`<div class="episode"><button class="episode-index" data-play-episode="${story.id}|${ep.id}">${i+1}</button><div><h4>${esc(ep.title)}</h4><p>${esc(ep.duration)} · ${ep.free?'مجانية':'تفتح عند تفعيل الباقات'}${isDemoAudio(ep.audioSrc)?' · معاينة صوتية':' · صوت خاص'}</p></div>${ep.free?`<button class="tiny-btn" data-play-episode="${story.id}|${ep.id}">تشغيل</button>`:`<span class="lock">قريباً</span>`}</div>`).join('') || `<div class="empty">ماكو حلقات بعد.</div>`}
-  </div></section><section class="section"><div class="section-head"><h2>قد يعجبك أيضاً</h2></div><div class="grid">${state.stories.filter(s=>s.id!==story.id).slice(0,2).map(storyCard).join('')}</div></section>`;
+  ${episodes.map((ep,i)=>{ const active=state.player.storyId===story.id&&state.player.episodeId===ep.id; return `<div class="episode ${active?'episode-active':''}"><button class="episode-index" data-play-episode="${story.id}|${ep.id}">${i+1}</button><div><h4>${esc(ep.title)}${active?' · الآن':''}</h4><p>${esc(ep.duration)} · ${ep.free?'مجانية':'تفتح عند تفعيل الباقات'}${isDemoAudio(ep.audioSrc)?' · معاينة صوتية':' · صوت خاص'}</p></div>${ep.free?`<button class="tiny-btn" data-play-episode="${story.id}|${ep.id}">${active?'مشغّل':'تشغيل'}</button>`:`<span class="lock">قريباً</span>`}</div>`; }).join('') || `<div class="empty">ماكو حلقات بعد.</div>`}
+  </div></section><section class="section"><div class="section-head"><h2>قد يعجبك أيضاً</h2></div><div class="grid">${getPublicStories().filter(s=>s.id!==story.id).slice(0,2).map(storyCard).join('')}</div></section>`;
 }
 
 function playerView(){
   const story=getStory(state.player.storyId);
-  const artwork=story?coverSrc(story):'assets/jazal-mark.svg?v=jazal-production-v1';
+  const artwork=story?coverSrc(story):'assets/jazal-mark.svg?v=jazal-launch-v1';
   const backView=story?`detail:${story.id}`:'home';
   const duration=currentAudioDuration();
   const elapsed=currentAudioTime();
@@ -415,7 +415,7 @@ function playerView(){
   const hasNext=state.player.kind==='episode'&&!!getNextEpisode(state.player.storyId,state.player.episodeId);
   return `<section class="player-page"><div class="player-stage ${state.player.playing?'':'paused'}">
     <div class="player-top"><button class="tiny-btn" data-view="${backView}">رجوع</button><span>${state.player.kind==='fm'?'بث مباشر':'قيد التشغيل'}</span><button class="tiny-btn" ${story?`data-share-story="${story.id}"`:'data-share-app'}>مشاركة</button></div>
-    <div class="player-art"><div class="player-art-ring" style="background:${storyGradient(story)}"><img src="${artwork}" alt="غلاف التشغيل" onerror="this.src='assets/jazal-mark.svg?v=jazal-production-v1'" /></div></div>
+    <div class="player-art"><div class="player-art-ring" style="background:${storyGradient(story)}"><img src="${artwork}" alt="غلاف التشغيل" onerror="this.src='assets/jazal-mark.svg?v=jazal-launch-v1'" /></div></div>
     <div class="player-info"><small>${state.player.kind==='fm'?'جَزَل FM مباشر':isDemoAudio(state.player.audioSrc)?'معاينة صوتية · '+esc(story?.genre||'جَزَل'):esc(story?.genre||'جَزَل')}</small><h1>${esc(state.player.title||'جَزَل')}</h1><p>${esc(state.player.subtitle||'اسمع القصة للآخر')}</p></div>
     <div class="player-progress"><div class="progress"><span style="width:${state.player.progress||0}%"></span></div><div class="player-time"><span data-player-elapsed>${state.player.kind==='fm'?'LIVE':formatSeconds(elapsed)}</span><span data-player-duration>${state.player.kind==='fm'?'جَزَل FM':formatSeconds(duration)}</span></div></div>
     <div class="player-controls"><button class="player-control" data-play-prev ${hasPrev?'':'disabled'}>⏮</button><button class="player-control" data-seek="-10">-10</button><button class="player-main" data-mini-toggle>${state.player.playing?'Ⅱ':'▶'}</button><button class="player-control" data-seek="10">+10</button><button class="player-control" data-play-next ${hasNext?'':'disabled'}>⏭</button></div>
@@ -424,7 +424,7 @@ function playerView(){
 }
 
 function fmView(){
-  return `<h1 class="page-title">جزل FM</h1><p class="page-subtitle">بث صوتي مباشر للحلقات والبرامج اليومية. يمكن تغيير رابط البث من لوحة الإدارة.</p>
+  return `<h1 class="page-title">جَزَل FM</h1><p class="page-subtitle">بث صوتي مباشر للحلقات والبرامج اليومية. يمكن تغيير رابط البث من لوحة الإدارة.</p>
   <section class="live-card"><span class="live-chip"><span class="pulse"></span>${state.fm.live?'مباشر الآن':'متوقف حالياً'}</span><h2>${esc(state.fm.title)}</h2><p>${esc(state.fm.note)}<br>المقدم: ${esc(state.fm.host)}</p><div class="listener-pill">● ${state.fm.listeners} مستمع الآن</div><div class="player-dial"><button class="playbig" data-play-fm>${state.player.playing&&state.player.kind==='fm'?'Ⅱ':'▶'}</button></div><div class="progress"><span style="width:${state.player.kind==='fm'?state.player.progress:42}%"></span></div></section>
   <section class="section"><div class="section-head"><h2>جدول اليوم</h2><span class="soon">تجريبي</span></div><div class="panel-card">${state.schedule.map(item=>`<div class="episode schedule-row"><div class="episode-index">${item.time.slice(0,2)}</div><div><h4>${esc(item.title)}</h4><p>${esc(item.time)} · ${esc(item.host)}<br>${esc(item.desc)}</p></div><button class="tiny-btn" data-remind="${esc(item.title)}">ذكّرني</button></div>`).join('')}</div></section>`;
 }
@@ -440,11 +440,11 @@ function plansView(){ return `<h1 class="page-title">الباقات</h1><p class
 function aboutView(){ return `<h1 class="page-title">عن جزل</h1><p class="page-subtitle">جزل منصة بودكاست وقصص صوتية عراقية، تجمع الحكايات، المسلسلات، البث المباشر، وقصص الجمهور بصوت واحد.</p><div class="legal-card"><h2>الفكرة</h2><p>نحوّل القصص إلى تجربة صوتية سهلة، سريعة، وتبقى وياك حتى بعد قفل شاشة الموبايل.</p><ul><li>بودكاست وقصص صوتية</li><li>جزل FM مباشر</li><li>قصص جمهور قابلة للتحويل لحلقات</li><li>باقات قريباً</li></ul></div><div class="cta-row"><button class="primary" data-view="library">ابدأ الاستماع</button><button class="secondary" data-view="support">تواصل ويانا</button></div>`; }
 function privacyView(){ return `<h1 class="page-title">سياسة الخصوصية</h1><p class="page-subtitle">نسخة أولية لمرحلة الإطلاق التجريبي.</p><div class="legal-card"><h2>البيانات</h2><p>قد نحفظ بيانات بسيطة مثل القصص المرسلة من المستخدم، حالة المفضلة، وسجل التشغيل على الجهاز أو Firebase عند استخدام الإدارة.</p><h2>قصص الجمهور</h2><p>أي قصة ترسلها عبر “احچي قصتك” تُستخدم للمراجعة وقد تُحوّل إلى محتوى بعد الموافقة والتحرير.</p><h2>الحسابات</h2><p>حسابات الإدارة تستخدم Firebase Authentication ولا نطلب مفاتيح خاصة من المستخدمين.</p><h2>التواصل</h2><p>لأي حذف أو تعديل محتوى، راسلنا من صفحة الدعم.</p></div>`; }
 function termsView(){ return `<h1 class="page-title">شروط الاستخدام</h1><p class="page-subtitle">استخدام جزل يعني قبول هذه الشروط الأولية.</p><div class="legal-card"><h2>المحتوى</h2><p>المحتوى التجريبي داخل التطبيق للعرض والتطوير، ولا يمثل إطلاقاً تجارياً نهائياً.</p><h2>الإرسال</h2><p>عند إرسال قصة، تؤكد أنها تخصك أو لديك حق مشاركتها، وأنها لا تحتوي إساءة أو معلومات حساسة عن أشخاص بدون إذن.</p><h2>الباقات</h2><p>الباقات والاشتراكات حالياً “قريباً” ولا يوجد دفع فعلي داخل النسخة الحالية.</p><h2>الإدارة</h2><p>لوحة الإدارة مخصصة لفريق جزل فقط.</p></div>`; }
-function supportView(){ return `<h1 class="page-title">تواصل ودعم</h1><p class="page-subtitle">للشكاوى، الدعم، التعاون، أو اقتراح قصة.</p><div class="support-card"><b>دعم جزل</b><p class="muted">حالياً الدعم تجريبي. لاحقاً نضيف إيميل رسمي وواتساب.</p><button class="primary" data-share-app>مشاركة رابط التطبيق</button></div><div class="legal-links"><button data-view="about">عن جزل</button><button data-view="privacy">الخصوصية</button><button data-view="terms">الشروط</button></div>`; }
+function supportView(){ return `<h1 class="page-title">تواصل ودعم</h1><p class="page-subtitle">للشكاوى، الدعم، التعاون، أو اقتراح قصة.</p><div class="support-card"><b>دعم جَزَل</b><p class="muted">فريق جَزَل جاهز يساعدك بالمحتوى، التقنية، أو التعاون.</p><div class="support-links"><a class="support-link" href="mailto:support@jazal.app"><div><b>البريد الإلكتروني</b><small>support@jazal.app</small></div><span>‹</span></a><button class="support-link" data-share-app><div><b>مشاركة التطبيق</b><small>أرسل رابط جَزَل لصديق</small></div><span>‹</span></button><button class="support-link" data-view="submit"><div><b>اقترح قصة</b><small>احچي قصتك من داخل التطبيق</small></div><span>‹</span></button></div></div><div class="legal-links"><button data-view="about">عن جَزَل</button><button data-view="privacy">الخصوصية</button><button data-view="terms">الشروط</button></div>`; }
 
 function accountView(){
   const favStories=state.favorites.map(getStory).filter(Boolean);
-  return `<div class="logo-lockup">${logoIcon()}<h2>جزل</h2><p>بودكاست وقصص صوتية</p></div><div class="panel-card profile-card"><div class="row"><div><h2 style="margin:0">${esc(state.user.name)}</h2><p class="muted" style="margin:6px 0 0">حساب تجريبي مفعل · اسمع القصة للآخر</p></div><span class="soon">مجاني</span></div><div class="stats" style="margin-top:16px"><div class="stat"><strong>${state.stories.length}</strong><small>أعمال متاحة</small></div><div class="stat"><strong>${state.submissions.length}</strong><small>قصص مرسلة</small></div></div></div>
+  return `<div class="logo-lockup">${logoIcon()}<h2>جَزَل</h2><p>بودكاست وقصص صوتية</p></div><div class="panel-card profile-card"><div class="row"><div><h2 style="margin:0">${esc(state.user.name)}</h2><p class="muted" style="margin:6px 0 0">استمع القصة للآخر · حساب مجاني</p></div><span class="soon">مجاني</span></div><div class="stats" style="margin-top:16px"><div class="stat"><strong>${getPublicStories().length}</strong><small>أعمال متاحة</small></div><div class="stat"><strong>${state.favorites.length}</strong><small>محفوظات</small></div><div class="stat"><strong>${state.mySubmissions.length}</strong><small>قصص مرسلة</small></div></div></div>
   <div class="panel-card background-audio-card"><div class="row"><div><b>تشغيل بالخلفية</b><p class="muted" style="margin:6px 0 0">بعد ما تضغط تشغيل، الصوت يبقى شغال إذا قفلت شاشة الموبايل وتظهر أزرار التشغيل بالقفل.</p></div><span class="soon">مفعّل</span></div></div>
   <div class="panel-card"><div class="row"><div><b>المزامنة السحابية</b><p class="muted" style="margin:6px 0 0">المحتوى محفوظ ومحدّث عبر لوحة الإدارة.</p></div><span class="soon">مفعّلة</span></div></div>
   <div class="cta-row"><button class="secondary" data-install>تثبيت التطبيق</button><button class="secondary" data-share-app>مشاركة</button><button class="secondary" data-view="support">الدعم</button></div><div class="install-guide panel-card"><b>ثبّت جزل على الآيفون</b><p class="muted">افتح الرابط من Safari ثم اضغط مشاركة → إضافة إلى الشاشة الرئيسية حتى يصير مثل تطبيق.</p></div><div class="admin-gate panel-card"><div class="row"><div><b>استوديو الإدارة</b><p class="muted" style="margin:6px 0 0">الدخول مخصص لفريق جزل فقط.</p></div><button class="tiny-btn" data-view="admin">فتح</button></div></div>
@@ -690,16 +690,18 @@ async function cloudSubmissionUpdate(item, patch){
 function render(){
   let html=''; const view=state.currentView;
   if(view.startsWith('detail:')) html=detailView(view.split(':')[1]); else if(view==='player') html=playerView(); else if(view==='home') html=homeView(); else if(view==='library') html=libraryView(); else if(view==='fm') html=fmView(); else if(view==='submit') html=submitView(); else if(view==='plans') html=plansView(); else if(view==='account') html=accountView(); else if(view==='admin') html=adminView(); else if(view==='about') html=aboutView(); else if(view==='privacy') html=privacyView(); else if(view==='terms') html=termsView(); else if(view==='support') html=supportView(); else html=homeView();
-  app().innerHTML=html; app().scrollTop=0; renderMiniPlayer(); updateNav(); bindEvents(); renderPlayerProgress(); save();
+  const root=app();
+  root.className='app page-fade'+(state.player.title?' has-mini-player':'');
+  root.innerHTML=html; root.scrollTop=0; renderMiniPlayer(); updateNav(); bindEvents(); renderPlayerProgress(); save();
 }
 
 function renderMiniPlayer(){
   const el=qs('#miniPlayer');
   if(!state.player.title){el.classList.add('hidden');return;}
   const story=getStory(state.player.storyId);
-  const artwork=story?coverSrc(story):'assets/jazal-mark.svg?v=jazal-production-v1';
+  const artwork=story?coverSrc(story):'assets/jazal-mark.svg?v=jazal-launch-v1';
   el.classList.remove('hidden');
-  el.innerHTML=`<div class="mini-inner"><button class="mini-cover" data-open-player aria-label="فتح المشغل"><img src="${artwork}" alt="" onerror="this.src='assets/jazal-mark.svg?v=jazal-production-v1'" /></button><button class="mini-title" data-open-player><strong>${esc(state.player.title)}</strong><small>${esc(state.player.subtitle)}</small><div class="progress"><span style="width:${state.player.progress}%"></span></div></button><button class="speed-btn" data-speed>${state.player.speed||'1x'}</button><button class="mini-play-main" data-mini-toggle aria-label="تشغيل أو إيقاف">${state.player.playing?'Ⅱ':'▶'}</button></div>`;
+  el.innerHTML=`<div class="mini-inner"><button class="mini-cover" data-open-player aria-label="فتح المشغل"><img src="${artwork}" alt="" onerror="this.src='assets/jazal-mark.svg?v=jazal-launch-v1'" /></button><button class="mini-title" data-open-player><strong>${esc(state.player.title)}</strong><small>${esc(state.player.subtitle)}</small><div class="progress"><span style="width:${state.player.progress}%"></span></div></button><button class="speed-btn" data-speed>${state.player.speed||'1x'}</button><button class="mini-play-main" data-mini-toggle aria-label="تشغيل أو إيقاف">${state.player.playing?'Ⅱ':'▶'}</button></div>`;
   const play=el.querySelector('[data-mini-toggle]'); if(play) play.onclick=e=>{e.stopPropagation();togglePlay();};
   const speed=el.querySelector('[data-speed]'); if(speed) speed.onclick=e=>{e.stopPropagation();cycleSpeed();};
   el.querySelectorAll('[data-open-player]').forEach(x=>x.onclick=e=>{e.stopPropagation();nav('player');});

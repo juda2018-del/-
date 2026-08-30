@@ -206,13 +206,6 @@ svg{display:block}
 .feature:hover{transform:translateY(-2px);background:rgba(139,92,246,.1);border-color:rgba(139,92,246,.24)}
 .feature span{display:grid;place-items:center;width:35px;height:35px;border-radius:12px;margin-bottom:7px;background:var(--gradient-soft);font-size:17px}
 .feature b{font-size:11.5px}.feature small{margin-top:2px;color:var(--muted-2);font-size:8.5px}
-.continue-card{position:relative;overflow:hidden;padding:15px 16px 13px}
-.continue-card::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--gradient)}
-.continue-card>div:first-child{padding-left:58px}
-.continue-card h3{margin:7px 0 3px;font:700 18px/1.35 var(--font-title)}
-.continue-card p{margin:0;color:var(--muted);font-size:11.5px}
-.continue-card .play-orb{position:absolute;left:15px;top:17px}
-.continue-card .progress{margin-top:14px}
 
 /* Story grids/cards */
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
@@ -384,9 +377,39 @@ svg{display:block}
 .toast{position:fixed;z-index:9999;left:50%;bottom:calc(166px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:min(360px,86vw);padding:11px 15px;border-radius:13px;background:rgba(22,21,48,.97);color:#fff;font-size:11px;text-align:center;border:1px solid var(--line-strong);box-shadow:0 18px 50px rgba(0,0,0,.5);animation:toastIn .2s ease}
 @keyframes toastIn{from{opacity:0;transform:translate(-50%,8px)}}
 
-.preview-banner{border:1px solid rgba(236,72,153,.28);background:linear-gradient(135deg,rgba(76,29,149,.22),rgba(236,72,153,.08))}
+.preview-banner{margin-bottom:14px;border:1px solid rgba(236,72,153,.28);background:linear-gradient(135deg,rgba(76,29,149,.22),rgba(236,72,153,.08))}
 .preview-banner b{color:#f9a8d4}
-  .topbar{padding-inline:12px}.app{padding-inline:12px}.home-hero{padding:15px}.hero-featured{grid-template-columns:minmax(0,1fr) 112px}.hero-copy h1{font-size:23px}.feature-strip{gap:6px}.feature{min-height:82px}.detail-hero{grid-template-columns:116px minmax(0,1fr);gap:13px;padding:13px}.detail-content h1{font-size:23px}.grid{gap:9px}.library-info{padding:9px}.library-title-row h3{font-size:13px}.bottom-nav small{font-size:8px}
+.admin-lock{border-color:rgba(139,92,246,.28);background:linear-gradient(145deg,rgba(61,43,120,.28),rgba(17,17,38,.95))}
+.app.has-mini-player{padding-bottom:88px}
+.episode-active{background:rgba(139,92,246,.08);margin:0 -13px;padding:12px 13px;border-radius:14px;border-bottom-color:transparent}
+.episode-active .episode-index{background:var(--gradient);color:#fff;border-color:transparent}
+.continue-card{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;padding:15px 16px}
+.continue-card::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--gradient);border-radius:22px 0 0 22px}
+.continue-card .play-orb{position:static;flex:0 0 46px}
+.continue-body{min-width:0;text-align:right}
+.continue-body h3{margin:7px 0 3px;font:700 18px/1.35 var(--font-title);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.continue-body p{margin:0 0 12px;color:var(--muted);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.support-links{display:grid;gap:10px;margin-top:14px}
+.support-link{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid var(--line);text-align:right;width:100%;text-decoration:none;color:inherit}
+.support-link b{display:block;font-size:13px}
+.support-link small{display:block;margin-top:4px;color:var(--muted);font-size:10px}
+.page-fade{animation:pageFade .22s ease}
+@keyframes pageFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+@media (max-width:370px){
+  .topbar{padding-inline:12px}
+  .app{padding-inline:12px}
+  .home-hero{padding:15px}
+  .hero-featured{grid-template-columns:minmax(0,1fr) 112px}
+  .hero-copy h1{font-size:23px}
+  .feature-strip{gap:6px}
+  .feature{min-height:82px}
+  .detail-hero{grid-template-columns:116px minmax(0,1fr);gap:13px;padding:13px}
+  .detail-content h1{font-size:23px}
+  .grid{gap:9px}
+  .library-info{padding:9px}
+  .library-title-row h3{font-size:13px}
+  .bottom-nav small{font-size:8px}
 }
 
 @media (min-width:700px){
