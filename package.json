@@ -12,6 +12,7 @@
     "launch": "npm run build && npm run lint && npm run typecheck && npm run security",
     "deploy:auto": "node scripts/launch-deploy.js",
     "deploy:preview": "node scripts/deploy-preview.js",
+    "release:package": "node scripts/package-release.js",
     "vercel:cli": "node scripts/vercel-cli.js",
     "vercel:link": "node scripts/vercel-link.js",
     "vercel:deploy": "node scripts/vercel-deploy-hook.js",

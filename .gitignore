@@ -16,3 +16,4 @@ android/build/
 dist/
 .vercel
 www/
+release/
