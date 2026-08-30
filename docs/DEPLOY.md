@@ -9,6 +9,14 @@ The repo is configured for Vercel static output from `www/`:
 - `buildCommand`: `npm run build`
 - `outputDirectory`: `www`
 
+### Quick links (team juda12)
+
+| Action | Link |
+|--------|------|
+| Connect Git to JAZAL | https://vercel.com/juda12/jazal/settings/git |
+| Claim latest build (no token) | https://vercel.com/claim-deployment?code=fbec597b-1e29-452b-9078-bd8fe2511ac9 |
+| Preview (new code) | https://temporary-instant-violet-2r2m0cs.vercel.app |
+
 ### Option A — One-command link (recommended)
 
 1. Create token: https://vercel.com/account/tokens
@@ -25,14 +33,27 @@ This links `juda2018-del/-` to project `prj_eAIzDeZ40S23Cf1bnLq91FVstQf0` and tr
 
 ### Option B — Vercel Dashboard (manual)
 
-1. Vercel Dashboard → Project **JAZAL** → Settings → Git
+1. Open https://vercel.com/juda12/jazal/settings/git
 2. Connect repository: `juda2018-del/-`
 3. Production Branch: `main`
 4. Build Command: `npm run build`
 5. Output Directory: `www`
 6. Redeploy production
 
-### Option C — GitHub Actions
+### Option C — Deploy Hook (after Git is linked)
+
+1. Vercel → JAZAL → Settings → Git → **Deploy Hooks** → create hook for branch `main`
+2. Add GitHub secret `VERCEL_DEPLOY_HOOK` with the hook URL
+3. Every push to `main` auto-redeploys via `.github/workflows/vercel-deploy-hook.yml`
+
+Or run manually:
+
+```bash
+export VERCEL_DEPLOY_HOOK=https://api.vercel.com/v1/integrations/deploy/...
+npm run vercel:deploy
+```
+
+### Option D — GitHub Actions (full API deploy)
 
 Add repository secrets (Settings → Secrets and variables → Actions):
 
@@ -40,13 +61,9 @@ Add repository secrets (Settings → Secrets and variables → Actions):
 - `VERCEL_ORG_ID`
 - `VERCEL_PROJECT_ID` = `prj_eAIzDeZ40S23Cf1bnLq91FVstQf0`
 
-Push to `main` runs `.github/workflows/ci.yml` automatically.
+Run **Actions → Vercel Production → Run workflow** after secrets are set.
 
-After adding secrets, run **Actions → Vercel Production → Run workflow** (or push with Git linked in Vercel dashboard).
-
-### Option D — Claim anonymous deploy (no token)
-
-If you cannot link Git yet, deploy from this repo and claim in Vercel:
+### Option E — Claim anonymous deploy (no token)
 
 ```bash
 npm run build
@@ -69,9 +86,21 @@ npx vercel --prod
 ```bash
 curl -s https://jazal.vercel.app/app.js | rg signupAdmin
 # should return nothing
-curl -s https://jazal.vercel.app/app.js | rg "function isAdmin"
+curl -s https://jazal.vercel.app/app.js | rg "jazal-launch-v1"
 # should match
 ```
+
+## 1b. Firebase Hosting (alternative web URL)
+
+If Vercel is not linked yet, you can publish the same build to Firebase:
+
+```bash
+npm install
+npx firebase login
+npm run firebase:deploy:hosting
+```
+
+Live URL: https://jazal-audio.web.app (or https://jazal-audio.firebaseapp.com)
 
 ## 2. Firebase Rules
 
