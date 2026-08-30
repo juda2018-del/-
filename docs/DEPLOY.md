@@ -34,13 +34,24 @@ This links `juda2018-del/-` to project `prj_eAIzDeZ40S23Cf1bnLq91FVstQf0` and tr
 
 ### Option C — GitHub Actions
 
-Add repository secrets:
+Add repository secrets (Settings → Secrets and variables → Actions):
 
 - `VERCEL_TOKEN`
 - `VERCEL_ORG_ID`
 - `VERCEL_PROJECT_ID` = `prj_eAIzDeZ40S23Cf1bnLq91FVstQf0`
 
 Push to `main` runs `.github/workflows/vercel-production.yml` automatically.
+
+### Option D — Claim anonymous deploy (no token)
+
+If you cannot link Git yet, deploy from this repo and claim in Vercel:
+
+```bash
+npm run build
+npx vercel deploy --temporary --yes
+```
+
+Open the printed `claimUrl` while logged into team **juda12**, select project **JAZAL**, and assign to production domain `jazal.vercel.app`.
 
 ### CLI deploy (if logged in)
 

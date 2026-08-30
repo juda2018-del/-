@@ -12,6 +12,7 @@ const PROJECT_ID = process.env.VERCEL_PROJECT_ID || 'prj_eAIzDeZ40S23Cf1bnLq91FV
 const TEAM_ID = process.env.VERCEL_ORG_ID || '';
 const TOKEN = process.env.VERCEL_TOKEN;
 const REPO = process.env.VERCEL_GIT_REPO || 'juda2018-del/-';
+const REPO_ID = Number(process.env.GITHUB_REPO_ID || '1256517499');
 const PRODUCTION_BRANCH = process.env.VERCEL_PRODUCTION_BRANCH || 'main';
 
 if (!TOKEN) {
@@ -73,11 +74,16 @@ async function main() {
       gitSource: {
         type: 'github',
         ref: PRODUCTION_BRANCH,
-        repoId: REPO,
+        repoId: REPO_ID,
       },
     },
   });
   console.log('Production deployment triggered:', deploy.url || deploy.id);
+
+  const project = await vercel(`/v9/projects/${PROJECT_ID}`);
+  const prodUrl = project?.targets?.production?.alias?.[0] || project?.alias?.[0] || 'https://jazal.vercel.app';
+  console.log('Production URL:', prodUrl);
+  console.log('Verify:', `curl -s ${prodUrl}/app.js | rg jazal-launch-v1`);
 }
 
 main().catch(err => {
