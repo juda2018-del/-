@@ -12,7 +12,7 @@ Required secrets (add in **Cursor → Cloud Agent → Environment → Secrets**)
 
 | Secret | Purpose |
 |--------|---------|
-| `VERCEL_TOKEN` | Vercel API token |
+| `VERCEL_TOKEN` | Vercel API token from https://vercel.com/account/tokens (**not** a `vcn_*` claim token) |
 | `VERCEL_ORG_ID` | Team juda12 ID (`team_…`) |
 | `VERCEL_PROJECT_ID` | `prj_eAIzDeZ40S23Cf1bnLq91FVstQf0` (optional, has default) |
 | `VERCEL_DEPLOY_HOOK` | Redeploy after Git is linked |
