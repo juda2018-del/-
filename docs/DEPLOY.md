@@ -40,7 +40,9 @@ Add repository secrets (Settings → Secrets and variables → Actions):
 - `VERCEL_ORG_ID`
 - `VERCEL_PROJECT_ID` = `prj_eAIzDeZ40S23Cf1bnLq91FVstQf0`
 
-Push to `main` runs `.github/workflows/vercel-production.yml` automatically.
+Push to `main` runs `.github/workflows/ci.yml` automatically.
+
+After adding secrets, run **Actions → Vercel Production → Run workflow** (or push with Git linked in Vercel dashboard).
 
 ### Option D — Claim anonymous deploy (no token)
 
