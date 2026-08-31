@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://jazal.vercel.app/
+Sitemap: https://temporary-sonic-harp-0ymnpou.vercel.app/

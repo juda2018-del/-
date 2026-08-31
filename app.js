@@ -14,6 +14,7 @@ const firebaseConfig = {
 };
 
 const APP_VERSION = 'jazal-fusion-v3';
+const LIVE_URL = 'https://temporary-sonic-harp-0ymnpou.vercel.app';
 const FIRESTORE_RULES_TEXT = `rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -287,7 +288,7 @@ function syncHash(view){
 }
 function appBaseUrl(){
   const origin=location?.origin;
-  return origin && origin !== 'null' ? origin : 'https://jazal.vercel.app';
+  return origin && origin !== 'null' ? origin : LIVE_URL;
 }
 function storyShareUrl(id){ return `${appBaseUrl()}/#/detail/${id}`; }
 function appShareUrl(){ return `${appBaseUrl()}/`; }

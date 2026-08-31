@@ -2,10 +2,17 @@
 
 بودكاست وقصص صوتية — Web + iOS + Android
 
-- **Web (مباشر — Fusion v3):** https://temporary-sonic-harp-0ymnpou.vercel.app
-- **Web (دومين):** https://jazal.vercel.app *(يحتاج ربط دومين — انظر `docs/VERCEL-3-STEPS-AR.md`)*
-- **Firebase:** `jazal-audio`
-- **Bundle ID:** `iq.jeeltech.jazal`
+## جاهز الآن
+
+| | |
+|---|---|
+| **افتح التطبيق** | **https://temporary-sonic-harp-0ymnpou.vercel.app** |
+| **الثيم** | Fusion v3 — بنفسجي + زجاجي |
+| **الإصدار** | `jazal-fusion-v3` |
+| **Firebase** | `jazal-audio` |
+| **Bundle ID** | `iq.jeeltech.jazal` |
+
+> الدومين `jazal.vercel.app` يُحدَّث لاحقاً عند ربطه بمشروع Vercel الجديد.
 
 ## التشغيل
 
