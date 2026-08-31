@@ -5,7 +5,7 @@
 **https://temporary-prompt-bugle-ugzt59v.vercel.app**
 
 - ثيم Fusion v4: بنفسجي/وردي كلاسيكي + تحسينات زجاجية
-- إصدار: `jazal-fusion-v4`
+- إصدار: `jazal-fusion-v5`
 - يعمل على الموبايل والكمبيوتر
 - يُضاف للشاشة الرئيسية كتطبيق (PWA)
 
