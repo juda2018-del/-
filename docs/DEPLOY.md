@@ -14,7 +14,7 @@ Required secrets (add in **Cursor → Cloud Agent → Environment → Secrets**)
 |--------|---------|
 | `VERCEL_TOKEN` | Vercel API token from https://vercel.com/account/tokens (**not** a `vcn_*` claim token) |
 | `VERCEL_ORG_ID` | Team juda12 ID (`team_…`) |
-| `VERCEL_PROJECT_ID` | `prj_eAIzDeZ40S23Cf1bnLq91FVstQf0` (optional, has default) |
+| `VERCEL_PROJECT_ID` | `prj_9e9ngS2Ku57628F3qUUtDgz6SN55` (مشروع Fusion v3 بعد Claim) أو `prj_eAIzDeZ40S23Cf1bnLq91FVstQf0` (قديم) |
 | `VERCEL_DEPLOY_HOOK` | Redeploy after Git is linked |
 | `GOOGLE_APPLICATION_CREDENTIALS` | Path to Firebase service account JSON |
 
