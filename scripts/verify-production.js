@@ -7,7 +7,7 @@
  *   node scripts/verify-production.js https://temporary-xxx.vercel.app
  */
 const PROD = process.env.JAZAL_PROD_URL || 'https://temporary-sonic-harp-0ymnpou.vercel.app';
-const EXPECT = process.env.JAZAL_EXPECT_VERSION || 'jazal-fusion-v3';
+const EXPECT = process.env.JAZAL_EXPECT_VERSION || 'jazal-fusion-v4';
 const extra = process.argv.slice(2);
 
 async function check(label, url) {

@@ -7,8 +7,8 @@
 | | |
 |---|---|
 | **افتح التطبيق** | **https://temporary-sonic-harp-0ymnpou.vercel.app** |
-| **الثيم** | Fusion v3 — بنفسجي + زجاجي |
-| **الإصدار** | `jazal-fusion-v3` |
+| **الإصدار** | `jazal-fusion-v4` |
+| **الثيم** | Fusion v4 — بنفسجي/وردي (هوية جَزَل) + زجاجي |
 | **Firebase** | `jazal-audio` |
 | **Bundle ID** | `iq.jeeltech.jazal` |
 
