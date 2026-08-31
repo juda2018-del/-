@@ -70,7 +70,10 @@ async function main() {
     console.log('  VERCEL_DEPLOY_HOOK            → auto redeploy on push');
     console.log('  GOOGLE_APPLICATION_CREDENTIALS → Firebase hosting + rules');
     console.log('\nManual (no token): https://vercel.com/juda12/jazal/settings/git');
-    console.log('Claim build: https://vercel.com/claim-deployment?code=fbec597b-1e29-452b-9078-bd8fe2511ac9');
+    console.log('  1. Connect repo juda2018-del/- branch main');
+    console.log('  2. Build: npm run build · Output: www');
+    console.log('  3. Redeploy production');
+    console.log('\nOr claim the preview above while logged into team juda12 → project JAZAL.');
   }
 }
 

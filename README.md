@@ -59,7 +59,8 @@ npm run cap:open:android  # Android Studio → Signed AAB
 
 راجع `docs/DEPLOY.md` للتفاصيل الكاملة.
 
-- **معاينة فورية (ثيم Aurora):** شغّل `npm run deploy:preview` أو افتح آخر رابط `temporary-*.vercel.app`
+- **معاينة فورية (ثيم Fusion v3):** `npm run deploy:preview` ثم افتح رابط `temporary-*.vercel.app`
+- **تحقق من الإنتاج:** `npm run deploy:verify`
 - **Web (Vercel):** https://jazal.vercel.app — اربط `main` بمشروع **JAZAL** على فريق **juda12**
 - **Web (GitHub Pages):** https://juda2018-del.github.io/-/ — يُنشر تلقائياً من `main`
 - **Web (Firebase Hosting):** `npm run firebase:deploy:hosting` → `https://jazal-audio.web.app`

@@ -95,7 +95,7 @@ async function main() {
   const project = await vercel(`/v9/projects/${PROJECT_ID}`);
   const prodUrl = project?.targets?.production?.alias?.[0] || project?.alias?.[0] || 'https://jazal.vercel.app';
   console.log('Production URL:', prodUrl);
-  console.log('Verify:', `curl -s ${prodUrl}/app.js | rg jazal-launch-v1`);
+  console.log('Verify:', `curl -s ${prodUrl}/app.js | rg jazal-fusion-v3`);
 }
 
 main().catch(err => {

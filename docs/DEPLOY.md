@@ -32,8 +32,8 @@ The repo is configured for Vercel static output from `www/`:
 | Action | Link |
 |--------|------|
 | Connect Git to JAZAL | https://vercel.com/juda12/jazal/settings/git |
-| Claim latest build (no token) | https://vercel.com/claim-deployment?code=fbec597b-1e29-452b-9078-bd8fe2511ac9 |
-| Preview (new code) | https://temporary-instant-violet-2r2m0cs.vercel.app |
+| Claim latest build (no token) | Run `npm run deploy:preview` and open the printed claim URL |
+| Preview (Fusion v3) | Run `npm run deploy:preview` — latest `temporary-*.vercel.app` |
 
 ### Option A — One-command link (recommended)
 
@@ -102,10 +102,11 @@ npx vercel --prod
 ### Verify after deploy
 
 ```bash
-curl -s https://jazal.vercel.app/app.js | rg signupAdmin
+npm run deploy:verify
+# or
+curl -s https://jazal.vercel.app/app.js | rg jazal-fusion-v3
+curl -s https://jazal.vercel.app/app.js | rg createUserWithEmailAndPassword
 # should return nothing
-curl -s https://jazal.vercel.app/app.js | rg "jazal-launch-v1"
-# should match
 ```
 
 ## 1b. GitHub Pages (auto on push to main)
