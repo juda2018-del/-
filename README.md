@@ -6,7 +6,7 @@
 
 | | |
 |---|---|
-| **افتح التطبيق** | **https://temporary-sonic-harp-0ymnpou.vercel.app** |
+| **افتح التطبيق** | **https://temporary-prompt-bugle-ugzt59v.vercel.app** |
 | **الإصدار** | `jazal-fusion-v4` |
 | **الثيم** | Fusion v4 — بنفسجي/وردي (هوية جَزَل) + زجاجي |
 | **Firebase** | `jazal-audio` |

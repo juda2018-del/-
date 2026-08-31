@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://temporary-sonic-harp-0ymnpou.vercel.app/
+Sitemap: https://temporary-prompt-bugle-ugzt59v.vercel.app/

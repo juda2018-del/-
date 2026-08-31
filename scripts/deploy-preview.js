@@ -29,7 +29,7 @@ const claim = out.match(/https:\/\/vercel\.com\/claim-deployment\?code=[a-f0-9-]
 
 if (url) {
   console.log('\n✓ Preview live:', url);
-  console.log('  Open on phone/browser to see Fusion v3 theme.');
+  console.log('  Open on phone/browser to see Fusion v4 theme.');
 }
 if (claim) console.log('  Claim (assign to JAZAL):', claim);
 if (!url) process.exit(r.status ?? 1);

@@ -14,7 +14,7 @@ const firebaseConfig = {
 };
 
 const APP_VERSION = 'jazal-fusion-v4';
-const LIVE_URL = 'https://temporary-sonic-harp-0ymnpou.vercel.app';
+const LIVE_URL = 'https://temporary-prompt-bugle-ugzt59v.vercel.app';
 const FIRESTORE_RULES_TEXT = `rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {

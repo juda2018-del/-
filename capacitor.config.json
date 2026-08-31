@@ -5,8 +5,9 @@
   "server": {
     "androidScheme": "https",
     "iosScheme": "https",
-    "hostname": "temporary-sonic-harp-0ymnpou.vercel.app",
+    "hostname": "temporary-prompt-bugle-ugzt59v.vercel.app",
     "allowNavigation": [
+      "temporary-prompt-bugle-ugzt59v.vercel.app",
       "temporary-sonic-harp-0ymnpou.vercel.app",
       "jazal.vercel.app",
       "jazal-audio.firebaseapp.com",

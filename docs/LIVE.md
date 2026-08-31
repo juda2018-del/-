@@ -2,7 +2,7 @@
 
 ## الرابط المباشر (Fusion v4 — هوية جَزَل الأصلية)
 
-**https://temporary-sonic-harp-0ymnpou.vercel.app**
+**https://temporary-prompt-bugle-ugzt59v.vercel.app**
 
 - ثيم Fusion v4: بنفسجي/وردي كلاسيكي + تحسينات زجاجية
 - إصدار: `jazal-fusion-v4`
