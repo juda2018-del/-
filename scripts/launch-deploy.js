@@ -44,6 +44,7 @@ async function main() {
   }
 
   if (process.env.VERCEL_TOKEN && process.env.VERCEL_ORG_ID && !tokenLooksInvalid(process.env.VERCEL_TOKEN)) {
+    deployed = run('node', ['scripts/vercel-deploy-prebuilt.js'], 'Vercel prebuilt production deploy') || deployed;
     deployed = run('node', ['scripts/vercel-link.js'], 'Vercel API link + production deploy') || deployed;
   }
 

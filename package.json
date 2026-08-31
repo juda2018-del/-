@@ -16,6 +16,7 @@
     "release:package": "node scripts/package-release.js",
     "vercel:cli": "node scripts/vercel-cli.js",
     "vercel:link": "node scripts/vercel-link.js",
+    "vercel:prebuilt": "node scripts/vercel-deploy-prebuilt.js",
     "vercel:deploy": "node scripts/vercel-deploy-hook.js",
     "firebase:deploy:rules": "firebase deploy --only firestore:rules,storage --project jazal-audio",
     "firebase:deploy:hosting": "npm run build && firebase deploy --only hosting --project jazal-audio",

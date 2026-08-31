@@ -35,15 +35,22 @@ The repo is configured for Vercel static output from `www/`:
 | Claim latest build (no token) | Run `npm run deploy:preview` and open the printed claim URL |
 | Preview (Fusion v3) | Run `npm run deploy:preview` — latest `temporary-*.vercel.app` |
 
-### Option A — One-command link (recommended)
+### Option A — One-command deploy (recommended)
 
 1. Create token: https://vercel.com/account/tokens
-2. Copy Team ID from Vercel → Team **juda12** → Settings → General
-3. Run:
+2. Copy Team ID from Vercel → Team **juda12** → Settings → General (`team_…`)
+3. Add both as **Cursor Cloud Agent secrets** (`VERCEL_TOKEN`, `VERCEL_ORG_ID`) or export locally:
 
 ```bash
 export VERCEL_TOKEN=your_token
 export VERCEL_ORG_ID=team_xxxxxxxx
+npm run vercel:prebuilt
+npm run deploy:verify
+```
+
+Or link Git + deploy:
+
+```bash
 npm run vercel:link
 ```
 
