@@ -13,7 +13,7 @@ const firebaseConfig = {
   measurementId: "G-B36438FY9N"
 };
 
-const APP_VERSION = 'jazal-fusion-v5';
+const APP_VERSION = 'jazal-ref-light-v1';
 const LIVE_URL = 'https://temporary-prompt-bugle-ugzt59v.vercel.app';
 const FIRESTORE_RULES_TEXT = `rules_version = '2';
 service cloud.firestore {
@@ -240,7 +240,7 @@ function nav(view){ state.currentView=view; syncHash(view); save(); render(); cl
 function setAdminTab(tab){ if(tab!=='firebase' && !isAdmin()) tab='firebase'; state.admin.tab=tab; save(); render(); }
 function isFav(id){ return state.favorites.includes(id); }
 function updateRecent(id){ state.recent=[id,...state.recent.filter(x=>x!==id)].slice(0,8); }
-function logoIcon(){ return `<img class="jazal-mark" src="assets/jazal-mark.svg?v=jazal-fusion-v5" alt="شعار جزل" />`; }
+function logoIcon(){ return `<img class="jazal-mark" src="assets/jazal-mark.svg?v=jazal-ref-light-v1" alt="شعار جزل" />`; }
 function getStory(id){ return state.stories.find(s=>s.id===id); }
 function getPublicStories(){ return state.stories.filter(s=>s.published!==false); }
 function normalizeStories(list){
@@ -293,24 +293,24 @@ function appBaseUrl(){
 function storyShareUrl(id){ return `${appBaseUrl()}/#/detail/${id}`; }
 function appShareUrl(){ return `${appBaseUrl()}/`; }
 function storyEpisodeCount(story){ return story.episodeList?.length || story.episodes || 0; }
-function coverSrc(story){ return `assets/covers/${story.id}.svg?v=jazal-fusion-v5`; }
+function coverSrc(story){ return `assets/covers/${story.id}.svg?v=jazal-ref-light-v1`; }
 function availableAudio(src){ return src && String(src).trim() ? String(src).trim() : DEMO_AUDIO_SRC; }
 function isDemoAudio(src){ const value=availableAudio(src); return value===DEMO_AUDIO_SRC || /jazal-demo\.mp3(?:\?|$)/.test(value); }
 function storyUsesDemoAudio(story){ return (story?.episodeList||[]).every(ep=>isDemoAudio(ep.audioSrc)); }
 function hasProductionAudio(){ return state.stories.some(s=>(s.episodeList||[]).some(ep=>!isDemoAudio(ep.audioSrc))); }
 function storyGradient(story){
   const map={
-    'رعب':'linear-gradient(145deg,#23104b,#6d3df1 54%,#ec4899)',
-    'جريمة':'linear-gradient(145deg,#071b34,#2563eb 54%,#22d3ee)',
-    'حب':'linear-gradient(145deg,#351428,#ec4899 54%,#fb7185)',
-    'واقعي':'linear-gradient(145deg,#231633,#8b5cf6 54%,#f472b6)',
-    'بودكاست':'linear-gradient(145deg,#101b39,#2563eb 48%,#a855f7)',
-    'أطفال':'linear-gradient(145deg,#17213d,#6366f1 50%,#22d3ee)'
+    'رعب':'linear-gradient(145deg,#4338A8,#5346BD 54%,#818CF8)',
+    'جريمة':'linear-gradient(145deg,#3730A3,#5346BD 54%,#818CF8)',
+    'حب':'linear-gradient(145deg,#6B21A8,#5346BD 54%,#F48FB1)',
+    'واقعي':'linear-gradient(145deg,#4338A8,#5346BD 54%,#FFD966)',
+    'بودكاست':'linear-gradient(145deg,#3730A3,#5346BD 48%,#818CF8)',
+    'أطفال':'linear-gradient(145deg,#4338A8,#6B5DD3 50%,#FFD966)'
   };
-  return map[story?.genre] || 'linear-gradient(145deg,#1b1640,#7c3aed 54%,#ec4899)';
+  return map[story?.genre] || 'linear-gradient(145deg,#4338A8,#5346BD 54%,#818CF8)';
 }
 function safeCover(story, cls=''){
-  if(!story) return `<img class="${cls}" src="assets/jazal-mark.svg?v=jazal-fusion-v5" alt="شعار جزل" />`;
+  if(!story) return `<img class="${cls}" src="assets/jazal-mark.svg?v=jazal-ref-light-v1" alt="شعار جزل" />`;
   return `<span class="cover-symbol" aria-hidden="true">${esc(story.emoji||'ج')}</span><img class="${cls}" src="${coverSrc(story)}" alt="غلاف ${esc(story.title)}" loading="lazy" onerror="this.style.display='none'" />`;
 }
 function formatSeconds(total){
@@ -412,7 +412,7 @@ function detailView(storyId){
 
 function playerView(){
   const story=getStory(state.player.storyId);
-  const artwork=story?coverSrc(story):'assets/jazal-mark.svg?v=jazal-fusion-v5';
+  const artwork=story?coverSrc(story):'assets/jazal-mark.svg?v=jazal-ref-light-v1';
   const backView=story?`detail:${story.id}`:'home';
   const duration=currentAudioDuration();
   const elapsed=currentAudioTime();
@@ -420,7 +420,7 @@ function playerView(){
   const hasNext=state.player.kind==='episode'&&!!getNextEpisode(state.player.storyId,state.player.episodeId);
   return `<section class="player-page"><div class="player-stage ${state.player.playing?'':'paused'}">
     <div class="player-top"><button class="tiny-btn" data-view="${backView}">رجوع</button><span>${state.player.kind==='fm'?'بث مباشر':'قيد التشغيل'}</span><button class="tiny-btn" ${story?`data-share-story="${story.id}"`:'data-share-app'}>مشاركة</button></div>
-    <div class="player-art"><div class="player-art-ring" style="background:${storyGradient(story)}"><img src="${artwork}" alt="غلاف التشغيل" onerror="this.src='assets/jazal-mark.svg?v=jazal-fusion-v5'" /></div></div>
+    <div class="player-art"><div class="player-art-ring" style="background:${storyGradient(story)}"><img src="${artwork}" alt="غلاف التشغيل" onerror="this.src='assets/jazal-mark.svg?v=jazal-ref-light-v1'" /></div></div>
     <div class="player-info"><small>${state.player.kind==='fm'?'جَزَل FM مباشر':isDemoAudio(state.player.audioSrc)?'معاينة صوتية · '+esc(story?.genre||'جَزَل'):esc(story?.genre||'جَزَل')}</small><h1>${esc(state.player.title||'جَزَل')}</h1><p>${esc(state.player.subtitle||'اسمع القصة للآخر')}</p></div>
     <div class="player-progress"><div class="progress"><span style="width:${state.player.progress||0}%"></span></div><div class="player-time"><span data-player-elapsed>${state.player.kind==='fm'?'LIVE':formatSeconds(elapsed)}</span><span data-player-duration>${state.player.kind==='fm'?'جَزَل FM':formatSeconds(duration)}</span></div></div>
     <div class="player-controls"><button class="player-control" data-play-prev ${hasPrev?'':'disabled'}>⏮</button><button class="player-control" data-seek="-10">-10</button><button class="player-main" data-mini-toggle>${state.player.playing?'Ⅱ':'▶'}</button><button class="player-control" data-seek="10">+10</button><button class="player-control" data-play-next ${hasNext?'':'disabled'}>⏭</button></div>
@@ -670,7 +670,7 @@ async function initCapacitor(){
       import('https://esm.sh/@capacitor/splash-screen@6.0.3')
     ]);
     await SplashScreen.hide().catch(()=>{});
-    await StatusBar.setStyle({style:Style.Style.Dark}).catch(()=>{});
+    await StatusBar.setStyle({style:Style.Style.Light}).catch(()=>{});
     App.addListener('appStateChange', ({isActive})=>{
       if(isActive && state.player.playing && audioEl?.paused) playRealAudio(false);
     });
@@ -704,9 +704,9 @@ function renderMiniPlayer(){
   const el=qs('#miniPlayer');
   if(!state.player.title){el.classList.add('hidden');return;}
   const story=getStory(state.player.storyId);
-  const artwork=story?coverSrc(story):'assets/jazal-mark.svg?v=jazal-fusion-v5';
+  const artwork=story?coverSrc(story):'assets/jazal-mark.svg?v=jazal-ref-light-v1';
   el.classList.remove('hidden');
-  el.innerHTML=`<div class="mini-inner"><button class="mini-cover" data-open-player aria-label="فتح المشغل"><img src="${artwork}" alt="" onerror="this.src='assets/jazal-mark.svg?v=jazal-fusion-v5'" /></button><button class="mini-title" data-open-player><strong>${esc(state.player.title)}</strong><small>${esc(state.player.subtitle)}</small><div class="progress"><span style="width:${state.player.progress}%"></span></div></button><button class="speed-btn" data-speed>${state.player.speed||'1x'}</button><button class="mini-play-main" data-mini-toggle aria-label="تشغيل أو إيقاف">${state.player.playing?'Ⅱ':'▶'}</button></div>`;
+  el.innerHTML=`<div class="mini-inner"><button class="mini-cover" data-open-player aria-label="فتح المشغل"><img src="${artwork}" alt="" onerror="this.src='assets/jazal-mark.svg?v=jazal-ref-light-v1'" /></button><button class="mini-title" data-open-player><strong>${esc(state.player.title)}</strong><small>${esc(state.player.subtitle)}</small><div class="progress"><span style="width:${state.player.progress}%"></span></div></button><button class="speed-btn" data-speed>${state.player.speed||'1x'}</button><button class="mini-play-main" data-mini-toggle aria-label="تشغيل أو إيقاف">${state.player.playing?'Ⅱ':'▶'}</button></div>`;
   const play=el.querySelector('[data-mini-toggle]'); if(play) play.onclick=e=>{e.stopPropagation();togglePlay();};
   const speed=el.querySelector('[data-speed]'); if(speed) speed.onclick=e=>{e.stopPropagation();cycleSpeed();};
   el.querySelectorAll('[data-open-player]').forEach(x=>x.onclick=e=>{e.stopPropagation();nav('player');});
