@@ -11,7 +11,7 @@ const path = require('path');
 
 const TOKEN = process.env.VERCEL_TOKEN;
 const ORG_ID = process.env.VERCEL_ORG_ID;
-const PROJECT_ID = process.env.VERCEL_PROJECT_ID || 'prj_9e9ngS2Ku57628F3qUUtDgz6SN55';
+const PROJECT_ID = process.env.VERCEL_PROJECT_ID || 'prj_eAIzDeZ40S23Cf1bnLq91FVstQf0';
 
 function fail(msg) {
   console.error(msg);

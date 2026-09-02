@@ -13,8 +13,8 @@
 
 set -e
 
-PROJECT_ID="prj_9e9ngS2Ku57628F3qUUtDgz6SN55"
-TEAM_ID="team_juda12"
+PROJECT_ID="prj_eAIzDeZ40S23Cf1bnLq91FVstQf0"
+TEAM_ID="team_K3hgXgywEsrkEwfPOizvbFfs"
 DOMAIN="jazal.vercel.app"
 
 if [ -z "$VERCEL_API_TOKEN" ]; then

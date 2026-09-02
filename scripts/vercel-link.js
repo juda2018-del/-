@@ -8,7 +8,7 @@
  * Get token: https://vercel.com/account/tokens
  * Get org id: Vercel → Team Settings → General (or `vercel teams ls`)
  */
-const PROJECT_ID = process.env.VERCEL_PROJECT_ID || 'prj_9e9ngS2Ku57628F3qUUtDgz6SN55';
+const PROJECT_ID = process.env.VERCEL_PROJECT_ID || 'prj_eAIzDeZ40S23Cf1bnLq91FVstQf0';
 const TEAM_ID = process.env.VERCEL_ORG_ID || '';
 const TOKEN = process.env.VERCEL_TOKEN;
 const REPO = process.env.VERCEL_GIT_REPO || 'juda2018-del/-';
