@@ -10,7 +10,6 @@ const ASSETS = [
   './manifest.json?v='+V,
   './assets/icon.svg?v='+V,
   './assets/jazal-mark.svg?v='+V,
-  './assets/jazal-logo-full.svg?v='+V,
   './assets/jazal-demo.mp3',
   ...COVERS
 ];

@@ -305,6 +305,13 @@ function isDemoAudio(src){ const value=String(src||'').trim(); return !value || 
 function isFmStreamReady(){ return !!(state.fm.streamUrl && String(state.fm.streamUrl).trim() && !isDemoAudio(state.fm.streamUrl)); }
 function isFmLiveNow(){ return !!(state.fm.live && isFmStreamReady()); }
 function isFmPreview(){ return !isFmStreamReady(); }
+function sanitizeFmState(){
+  const stream=String(state.fm?.streamUrl||'').trim();
+  if(!stream || stream===DEMO_AUDIO_SRC || /jazal-demo\.mp3(?:\?|$)/.test(stream)){
+    state.fm.streamUrl='';
+    state.fm.live=false;
+  }
+}
 function storyUsesDemoAudio(story){ return (story?.episodeList||[]).every(ep=>isDemoAudio(ep.audioSrc)); }
 function hasProductionAudio(){ return state.stories.some(s=>(s.episodeList||[]).some(ep=>!isDemoAudio(ep.audioSrc))); }
 function storyGradient(story){
@@ -729,7 +736,7 @@ function bindEvents(){
   qsa('[data-story]').forEach(el=>el.onclick=()=>nav('detail:'+el.dataset.story));
   qsa('[data-filter]').forEach(el=>el.onclick=()=>{state.filter=el.dataset.filter; state.currentView='library'; render();});
   qsa('[data-play-episode]').forEach(el=>el.onclick=e=>{e.stopPropagation(); const [sid,eid]=el.dataset.playEpisode.split('|'); playEpisode(sid,eid);});
-  qsa('[data-play-fm]').forEach(el=>el.onclick=()=>playFM());
+  qsa('[data-play-fm]').forEach(el=>el.onclick=()=>{ if(el.disabled || isFmPreview()){ toast('البث غير متصل — أضف رابط بث حقيقي من الإدارة'); return; } playFM(); });
   qsa('[data-mini-toggle]').forEach(el=>el.onclick=e=>{e.stopPropagation(); togglePlay();});
   qsa('[data-speed]').forEach(el=>el.onclick=e=>{e.stopPropagation(); cycleSpeed();});
   qsa('[data-fav]').forEach(el=>el.onclick=e=>{e.stopPropagation(); toggleFav(el.dataset.fav);});
@@ -1027,4 +1034,4 @@ if('serviceWorker' in navigator){
 const initialRoute = parseHashRoute();
 if(initialRoute) state.currentView = initialRoute;
 window.addEventListener('hashchange', ()=>{ const route=parseHashRoute(); if(route && route!==state.currentView){ state.currentView=route; render(); }});
-ensureAudio(); updateMediaSession(); render(); initFirebaseLive(); initCapacitor(); if(state.player.playing) playRealAudio(false);
+ensureAudio(); sanitizeFmState(); updateMediaSession(); render(); initFirebaseLive(); initCapacitor(); if(state.player.playing) playRealAudio(false);
