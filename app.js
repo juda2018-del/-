@@ -203,10 +203,7 @@ function loadState(){ try{return merge(structured(defaultState), JSON.parse(loca
 let state = loadState();
 function ensureGuestState(){
   if(state.firebase?.signedIn) return;
-  const staleName = !state.user?.name || state.user.name === 'مستمع جزل';
-  if(state.user?.logged || staleName){
-    state.user = {name:'ضيف', logged:false};
-  }
+  state.user = {name:'ضيف', logged:false};
 }
 function upgradeContentPack(){
   state.stories=normalizeStories(state.stories);
@@ -720,6 +717,7 @@ async function cloudSubmissionUpdate(item, patch){
 }
 
 function render(){
+  ensureGuestState();
   let html=''; const view=state.currentView;
   if(view.startsWith('detail:')) html=detailView(view.split(':')[1]); else if(view==='player') html=playerView(); else if(view==='home') html=homeView(); else if(view==='library') html=libraryView(); else if(view==='fm') html=fmView(); else if(view==='submit') html=submitView(); else if(view==='plans') html=plansView(); else if(view==='account') html=accountView(); else if(view==='admin') html=adminView(); else if(view==='about') html=aboutView(); else if(view==='privacy') html=privacyView(); else if(view==='terms') html=termsView(); else if(view==='support') html=supportView(); else html=homeView();
   const root=app();
