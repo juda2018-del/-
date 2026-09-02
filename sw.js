@@ -1,5 +1,5 @@
-const CACHE_NAME = 'jazal-prod-ready-v1-cache';
-const V = 'jazal-prod-ready-v1';
+const CACHE_NAME = 'jazal-prod-ready-v2-cache';
+const V = 'jazal-prod-ready-v2';
 const COVERS = ['old-door','river-secret','last-call','love-alley','hotel-17','case-qasr','jazal-talk','maqam-night','kids-night']
   .map(id => `./assets/covers/${id}.svg?v=${V}`);
 const ASSETS = [
@@ -27,6 +27,15 @@ self.addEventListener('fetch', event => {
   const request = event.request;
   if (request.mode === 'navigate') {
     event.respondWith(fetch(request).catch(() => caches.match('./index.html?v='+V).then(r => r || caches.match('./index.html'))));
+    return;
+  }
+  if (request.method === 'GET' && new URL(request.url).pathname.endsWith('/app.js')) {
+    event.respondWith(fetch(request).then(async response => {
+      if (!response.ok) return response;
+      const source = await response.text();
+      const patch = `\n// JAZAL PROD HOTFIX v2: a guest must never appear signed in by default.\ntry {\n  if (typeof state !== 'undefined' && state.firebase && !state.firebase.signedIn) {\n    state.user = {name:'مستمع جزل', logged:false};\n    if (typeof save === 'function') save();\n    if (typeof render === 'function') render();\n  }\n} catch (_) {}\n`;
+      return new Response(source + patch, {status: response.status, statusText: response.statusText, headers: response.headers});
+    }));
     return;
   }
   event.respondWith(fetch(request).then(response => {
