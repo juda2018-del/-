@@ -7,7 +7,7 @@
  *   node scripts/verify-production.js https://temporary-xxx.vercel.app
  */
 const PROD = process.env.JAZAL_PROD_URL || 'https://jazal.vercel.app';
-const EXPECT = process.env.JAZAL_EXPECT_VERSION || 'jazal-prod-ready-v1';
+const EXPECT = process.env.JAZAL_EXPECT_VERSION || 'jazal-prod-ready-v2';
 const extra = process.argv.slice(2);
 
 async function check(label, url) {
@@ -16,9 +16,10 @@ async function check(label, url) {
     const body = await res.text();
     const hasVersion = body.includes(EXPECT);
     const hasLegacy = body.includes('createUserWithEmailAndPassword') || body.includes('jazal-clean-rebuild');
-    const ok = hasVersion && !hasLegacy;
+    const hasGuestDefault = body.includes("logged:false") && body.includes("name:'ضيف'");
+    const ok = hasVersion && !hasLegacy && hasGuestDefault;
     console.log(`${ok ? '✓' : '✗'} ${label}: ${url}`);
-    console.log(`    version ${EXPECT}: ${hasVersion ? 'yes' : 'no'} · legacy code: ${hasLegacy ? 'yes' : 'no'}`);
+    console.log(`    version ${EXPECT}: ${hasVersion ? 'yes' : 'no'} · legacy code: ${hasLegacy ? 'yes' : 'no'} · guest default: ${hasGuestDefault ? 'yes' : 'no'}`);
     return ok;
   } catch (e) {
     console.log(`✗ ${label}: ${url} (${e.message})`);

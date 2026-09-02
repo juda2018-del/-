@@ -13,7 +13,7 @@ const firebaseConfig = {
   measurementId: "G-B36438FY9N"
 };
 
-const APP_VERSION = 'jazal-prod-ready-v1';
+const APP_VERSION = 'jazal-prod-ready-v2';
 const LIVE_URL = 'https://jazal.vercel.app';
 const FIRESTORE_RULES_TEXT = `rules_version = '2';
 service cloud.firestore {
@@ -180,7 +180,7 @@ const defaultState = {
   currentView:'home', filter:'الكل', query:'', favorites:['old-door'], recent:['old-door','river-secret'],
   player:{playing:false, kind:'episode', title:'الليلة الأولى', subtitle:'الباب القديم · رعب', storyId:'old-door', episodeId:'old-door-1', audioSrc:DEMO_AUDIO_SRC, progress:0, duration:755, speed:'1x'},
   fm:{live:false, title:'ليالي جَزَل', host:'ستوديو جَزَل', note:'بث صوتي للحكايات والحوارات — يُفعّل من لوحة الإدارة', listeners:0, streamUrl:''},
-  user:{name:'مستمع جزل', logged:true},
+  user:{name:'ضيف', logged:false},
   submissions:[], mySubmissions:[], stories:baseStories,
   firebase:{mode:'firebase', projectId:'jazal-audio', authDomain:firebaseConfig.authDomain, firestoreReady:true, live:false, signedIn:false, isAdmin:false, authEmail:'', lastSync:'', error:'', cloudStatus:'جاهز'},
   admin:{tab:'overview'},
@@ -201,9 +201,16 @@ function merge(base, saved){
 }
 function loadState(){ try{return merge(structured(defaultState), JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'));}catch(e){return structured(defaultState);} }
 let state = loadState();
+function ensureGuestState(){
+  if(state.firebase?.signedIn) return;
+  const staleName = !state.user?.name || state.user.name === 'مستمع جزل';
+  if(state.user?.logged || staleName){
+    state.user = {name:'ضيف', logged:false};
+  }
+}
 function upgradeContentPack(){
   state.stories=normalizeStories(state.stories);
-  if(state.contentVersion !== 'jazal-final-ui-font-audio-complete' && state.contentVersion !== APP_VERSION){
+  if(state.contentVersion !== 'jazal-final-ui-font-audio-complete' && state.contentVersion !== APP_VERSION && state.contentVersion !== 'jazal-prod-ready-v1'){
     state.stories = normalizeStories(structured(baseStories));
     state.contentVersion = APP_VERSION;
     state.recent = ['old-door','hotel-17','river-secret'];
@@ -212,6 +219,7 @@ function upgradeContentPack(){
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }
   state.contentVersion = APP_VERSION;
+  ensureGuestState();
 }
 upgradeContentPack();
 function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
@@ -467,8 +475,10 @@ function termsView(){ return `<h1 class="page-title">شروط الاستخدام
 function supportView(){ return `<h1 class="page-title">تواصل ودعم</h1><p class="page-subtitle">للشكاوى، الدعم، التعاون، أو اقتراح قصة.</p><div class="support-card"><b>دعم جَزَل</b><p class="muted">فريق جَزَل جاهز يساعدك بالمحتوى، التقنية، أو التعاون.</p><div class="support-links"><a class="support-link" href="mailto:support@jazal.app"><div><b>البريد الإلكتروني</b><small>support@jazal.app</small></div><span>‹</span></a><button class="support-link" data-share-app><div><b>مشاركة التطبيق</b><small>أرسل رابط جَزَل لصديق</small></div><span>‹</span></button><button class="support-link" data-view="submit"><div><b>اقترح قصة</b><small>احچي قصتك من داخل التطبيق</small></div><span>‹</span></button></div></div><div class="legal-links"><button data-view="about">عن جَزَل</button><button data-view="privacy">الخصوصية</button><button data-view="terms">الشروط</button></div>`; }
 
 function accountView(){
+  ensureGuestState();
+  const isGuest = state.user.logged !== true;
   const favStories=state.favorites.map(getStory).filter(Boolean);
-  return `<div class="logo-lockup">${logoIcon()}<h2>جَزَل</h2><p>بودكاست وقصص صوتية</p></div><div class="panel-card profile-card"><div class="row"><div><h2 style="margin:0">${esc(state.user.name)}</h2><p class="muted" style="margin:6px 0 0">استمع القصة للآخر · حساب مجاني</p></div><span class="soon">مجاني</span></div><div class="stats" style="margin-top:16px"><div class="stat"><strong>${getPublicStories().length}</strong><small>أعمال متاحة</small></div><div class="stat"><strong>${state.favorites.length}</strong><small>محفوظات</small></div><div class="stat"><strong>${state.mySubmissions.length}</strong><small>قصص مرسلة</small></div></div></div>
+  return `<div class="logo-lockup">${logoIcon()}<h2>جَزَل</h2><p>بودكاست وقصص صوتية</p></div><div class="panel-card profile-card"><div class="row"><div><h2 style="margin:0">${esc(isGuest ? 'ضيف' : state.user.name)}</h2><p class="muted" style="margin:6px 0 0">${isGuest ? 'تصفح بدون تسجيل · استمع واكتشف القصص' : 'استمع القصة للآخر · حساب مجاني'}</p></div><span class="soon">${isGuest ? 'ضيف' : 'مجاني'}</span></div><div class="stats" style="margin-top:16px"><div class="stat"><strong>${getPublicStories().length}</strong><small>أعمال متاحة</small></div><div class="stat"><strong>${state.favorites.length}</strong><small>محفوظات</small></div><div class="stat"><strong>${state.mySubmissions.length}</strong><small>قصص مرسلة</small></div></div></div>
   <div class="panel-card background-audio-card"><div class="row"><div><b>تشغيل بالخلفية</b><p class="muted" style="margin:6px 0 0">بعد ما تضغط تشغيل، الصوت يبقى شغال إذا قفلت شاشة الموبايل وتظهر أزرار التشغيل بالقفل.</p></div><span class="soon">مفعّل</span></div></div>
   <div class="cta-row"><button class="secondary" data-install>تثبيت التطبيق</button><button class="secondary" data-share-app>مشاركة</button><button class="secondary" data-view="support">الدعم</button></div><div class="install-guide panel-card"><b>ثبّت جزل على الآيفون</b><p class="muted">افتح الرابط من Safari ثم اضغط مشاركة → إضافة إلى الشاشة الرئيسية حتى يصير مثل تطبيق.</p></div><div class="admin-gate panel-card"><div class="row"><div><b>استوديو الإدارة</b><p class="muted" style="margin:6px 0 0">الدخول مخصص لفريق جزل فقط.</p></div><button class="tiny-btn" data-view="admin">فتح</button></div></div>
   <section class="section"><div class="section-head"><h2>المحفوظات</h2><span>${favStories.length}</span></div><div class="grid">${favStories.length?favStories.slice(0,4).map(storyCard).join(''):`<div class="empty">احفظ أعمالك المفضلة من المكتبة.</div>`}</div></section>`;

@@ -20,7 +20,7 @@ async function verifyVercel(url = 'https://jazal.vercel.app') {
   try {
     const res = await fetch(`${url}/app.js`, { signal: AbortSignal.timeout(15000) });
     const body = await res.text();
-    const ok = body.includes('jazal-prod-ready-v1') && !body.includes('createUserWithEmailAndPassword');
+    const ok = body.includes('jazal-prod-ready-v2') && !body.includes('createUserWithEmailAndPassword') && body.includes("logged:false");
     console.log(ok ? `✓ Production verified: ${url}` : `⚠ Production still on old build: ${url}`);
     return ok;
   } catch (e) {
