@@ -431,6 +431,10 @@ svg{display:block}
 .legal-card p{color:var(--muted);font-size:12px;line-height:1.9}
 .legal-card a{color:var(--primary);text-decoration:none}
 .legal-card a:hover{text-decoration:underline}
+.story-script-card h3{margin:0 0 8px;font:700 18px/1.4 var(--font-title);color:var(--text)}
+.story-script{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);color:var(--text);font-size:13px;line-height:2}
+.story-script p{margin:0 0 14px}
+.story-script p:last-child{margin-bottom:0}
 .legal-links{display:flex;justify-content:center;gap:10px;margin:14px 0}.legal-links button{color:var(--primary);font-size:11px}
 .logo-lockup{text-align:center;padding:14px 0 18px}
 .logo-lockup .jazal-mark{width:84px;height:84px;margin:0 auto;border-radius:25px;box-shadow:var(--glow-primary)}

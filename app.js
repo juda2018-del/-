@@ -81,9 +81,105 @@ let audioEl = null;
 let playerTimer = null;
 let deferredInstallPrompt = null;
 
+const STORIES_PACK = 'jazal-stories-last-door-v1';
+const LAST_DOOR_EP1_SCRIPT = `كانت الساعة تقترب من الثانية بعد منتصف الليل.
+
+المدينة هادئة بشكل غريب، والمطر يضرب زجاج النافذة كأنه يحاول أن يخبر أحداً بشيء.
+
+جلس آدم وحيداً في غرفته، ينظر إلى هاتفه للمرة العاشرة.
+
+لا رسائل.
+لا مكالمات.
+
+منذ اختفاء أخيه سامي قبل ثلاثة أيام، لم يعرف آدم أين ذهب، ولا لماذا ترك هاتفه في البيت.
+
+وفجأة…
+صدر صوت إشعار من الهاتف.
+
+تجمد آدم في مكانه.
+فتح الشاشة.
+
+كانت هناك رسالة من رقم مجهول.
+قرأها:
+
+«إذا وصلت إليك هذه الرسالة، فهذا يعني أنني لم أستطع العودة.»
+
+اتسعت عينا آدم.
+تمتم:
+— سامي؟
+
+ظهرت رسالة ثانية.
+«لا تثق بأي شخص يسألك عني.»
+
+ثم رسالة ثالثة:
+«اذهب إلى محطة القطار القديمة. الساعة الثالثة فجراً. تعال وحدك.»
+
+نظر آدم إلى الساعة.
+02:17.
+
+قال بصوت منخفض:
+— شنو اللي ديصير؟
+
+رن الهاتف.
+رقم مجهول.
+
+تردد آدم قبل أن يجيب.
+— ألو؟
+
+لم يسمع شيئاً.
+ثم جاء صوت رجل متقطع، وكأنه يتحدث من مكان بعيد.
+— آدم… لا تروح للمحطة.
+
+صمت آدم.
+— منو أنت؟
+
+قال الرجل:
+— إذا تريد أخوك يبقى حي… لا تروح.
+
+ثم انقطع الاتصال.
+
+وقف آدم بسرعة.
+ظل ينظر إلى الهاتف.
+
+وبعد ثوانٍ، وصلته رسالة جديدة.
+هذه المرة كانت من سامي.
+
+«أنا بالمحطة.»
+
+رفع آدم رأسه نحو النافذة.
+كان المطر يزداد.
+
+نظر إلى الساعة.
+02:21.
+
+أخذ سترته ومفاتيحه.
+وقال:
+— إذا سامي هناك… لازم أروح.
+
+خرج من البيت وأغلق الباب خلفه.
+
+لكن قبل أن يختفي في نهاية الشارع…
+ظهر شخص واقفاً تحت عمود الإنارة المقابل لمنزله.
+كان يراقبه.
+
+ثم أخرج هاتفه وقال:
+— تحرك.
+
+وبدأت سيارة سوداء تتحرك ببطء خلف آدم.
+
+نهاية الحلقة الأولى.`;
+
 const baseStories = [
   {
-    id:'old-door', title:'الباب القديم', genre:'رعب', emoji:'🚪', tag:'حكاية من بغداد القديمة', mood:'غموض', age:'+13', featured:true, published:true,
+    id:'last-door', title:'الباب الأخير', genre:'جريمة', emoji:'🚪', tag:'جزل Originals', mood:'تشويق', age:'+16', featured:true, published:true,
+    desc:'آدم يبحث عن أخيه سامي المختفي. رسالة مجهولة، مكالمة مقطوعة، وموعد عند محطة القطار القديمة — وكل خطوة تقوده لشيء أخطر.',
+    color:'linear-gradient(145deg,#1a1240,#5346BD 52%,#818CF8)', rating:'جديد', episodes:1, free:1, listens:'0', duration:'10د',
+    episodeList:[
+      {id:'last-door-1', title:'الرسالة', duration:'09:45', free:true, audioSrc:'', script:LAST_DOOR_EP1_SCRIPT}
+    ]
+  },
+  {
+    id:'old-door', title:'الباب القديم', genre:'رعب', emoji:'🚪', tag:'حكاية من بغداد القديمة', mood:'غموض', age:'+13', featured:false, published:true,
     desc:'بيت قديم في الكرخ محد ينام بيه. كل ليلة ينفتح باب مسدود وصوت يهمس باسم شخص من أهل البيت.',
     color:'linear-gradient(145deg,#10180d,#2f4a17 48%,#d4b14d)', rating:'4.9', episodes:6, free:2, listens:'18.6K', duration:'1س 12د',
     episodeList:[
@@ -205,14 +301,32 @@ function ensureGuestState(){
   if(state.firebase?.signedIn) return;
   state.user = {name:'ضيف', logged:false};
 }
+function formatScript(text=''){
+  return esc(text).split(/\n{2,}/).filter(Boolean).map(p=>`<p>${p.replace(/\n/g,'<br>')}</p>`).join('');
+}
+function mergeStoriesPack(){
+  const ids=new Set((state.stories||[]).map(s=>s.id));
+  baseStories.forEach(base=>{
+    if(!ids.has(base.id)) state.stories.unshift(structured(base));
+    else if(base.id==='last-door'){
+      const idx=state.stories.findIndex(s=>s.id==='last-door');
+      if(idx>=0) state.stories[idx]=structured(base);
+    }
+  });
+}
 function upgradeContentPack(){
   state.stories=normalizeStories(state.stories);
-  if(state.contentVersion !== 'jazal-final-ui-font-audio-complete' && state.contentVersion !== APP_VERSION && state.contentVersion !== 'jazal-prod-ready-v1'){
+  if(state.contentVersion !== 'jazal-final-ui-font-audio-complete' && state.contentVersion !== APP_VERSION && state.contentVersion !== 'jazal-prod-ready-v1' && state.contentVersion !== 'jazal-prod-ready-v2'){
     state.stories = normalizeStories(structured(baseStories));
     state.contentVersion = APP_VERSION;
-    state.recent = ['old-door','hotel-17','river-secret'];
+    state.recent = ['last-door','old-door','hotel-17'];
     state.player = structured(defaultState.player);
     state.favorites = ['old-door'];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+  if(state.storiesPack !== STORIES_PACK){
+    mergeStoriesPack();
+    state.storiesPack = STORIES_PACK;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }
   state.contentVersion = APP_VERSION;
@@ -423,12 +537,14 @@ function detailView(storyId){
   }
   updateRecent(story.id);
   const episodes=story.episodeList||[];
+  const scripted=episodes.filter(ep=>ep.script);
+  const scriptSection=scripted.length?`<section class="section"><div class="section-head"><h2>نص الحلقة</h2><span class="soon">معاينة نصية</span></div>${scripted.map(ep=>`<div class="panel-card story-script-card"><h3>${esc(ep.title)}</h3><p class="muted tiny-note">الصوت غير متاح بعد — اقرأ النص حتى يُنتج التسجيل الصوتي.</p><div class="story-script">${formatScript(ep.script)}</div></div>`).join('')}</section>`:'';
   return `<section class="detail-hero"><div class="cover cover-art" style="background:${storyGradient(story)}">${safeCover(story,'cover-img')}</div><div class="detail-content"><span class="live-chip">${esc(story.genre)} · ★ ${esc(story.rating)} · ${esc(story.age)}</span><h1>${esc(story.title)}</h1><p>${esc(story.desc)}</p></div></section>
   <div class="detail-meta panel-card"><div><strong>${episodes.length}</strong><small>حلقة</small></div><div><strong>${esc(story.duration)}</strong><small>مدة كلية</small></div><div><strong>${esc(story.listens)}</strong><small>استماع</small></div></div>
-  <div class="cta-row"><button class="primary" data-play-episode="${story.id}|${episodes[0]?.id||''}">▶ تشغيل من البداية</button><button class="secondary" data-fav="${story.id}">${isFav(story.id)?'♥ محفوظ':'♡ حفظ'}</button><button class="secondary" data-share-story="${story.id}">مشاركة</button></div>
+  <div class="cta-row"><button class="primary" data-play-episode="${story.id}|${episodes[0]?.id||''}" ${episodes[0]&&!resolveAudioSrc(episodes[0].audioSrc,{allowDemo:true})?'disabled':''}>▶ ${episodes[0]&&resolveAudioSrc(episodes[0].audioSrc,{allowDemo:true})?'تشغيل من البداية':'اقرأ النص أدناه'}</button><button class="secondary" data-fav="${story.id}">${isFav(story.id)?'♥ محفوظ':'♡ حفظ'}</button><button class="secondary" data-share-story="${story.id}">مشاركة</button></div>
   <section class="section"><div class="section-head"><h2>الحلقات</h2><span class="soon">${story.free||0} مجانية</span></div><div class="panel-card episodes-card">
-  ${episodes.map((ep,i)=>{ const active=state.player.storyId===story.id&&state.player.episodeId===ep.id; return `<div class="episode ${active?'episode-active':''}"><button class="episode-index" data-play-episode="${story.id}|${ep.id}">${i+1}</button><div><h4>${esc(ep.title)}${active?' · الآن':''}</h4><p>${esc(ep.duration)} · ${ep.free?'مجانية':'تفتح عند تفعيل الباقات'}${isDemoAudio(ep.audioSrc)?' · معاينة صوتية':' · صوت خاص'}</p></div>${ep.free?`<button class="tiny-btn" data-play-episode="${story.id}|${ep.id}">${active?'مشغّل':'تشغيل'}</button>`:`<span class="lock">قريباً</span>`}</div>`; }).join('') || `<div class="empty">ماكو حلقات بعد.</div>`}
-  </div></section><section class="section"><div class="section-head"><h2>قد يعجبك أيضاً</h2></div><div class="grid">${getPublicStories().filter(s=>s.id!==story.id).slice(0,2).map(storyCard).join('')}</div></section>`;
+  ${episodes.map((ep,i)=>{ const active=state.player.storyId===story.id&&state.player.episodeId===ep.id; const hasAudio=!!resolveAudioSrc(ep.audioSrc,{allowDemo:true}); const hasScript=!!ep.script; return `<div class="episode ${active?'episode-active':''}"><button class="episode-index" data-play-episode="${story.id}|${ep.id}" ${hasAudio?'':'disabled'}>${i+1}</button><div><h4>${esc(ep.title)}${active?' · الآن':''}</h4><p>${esc(ep.duration)} · ${ep.free?'مجانية':'تفتح عند تفعيل الباقات'}${hasAudio?(isDemoAudio(ep.audioSrc)?' · معاينة صوتية':' · صوت خاص'):hasScript?' · نص فقط':' · بدون صوت'}</p></div>${ep.free?(hasAudio?`<button class="tiny-btn" data-play-episode="${story.id}|${ep.id}">${active?'مشغّل':'تشغيل'}</button>`:`<span class="soon">نص</span>`):`<span class="lock">قريباً</span>`}</div>`; }).join('') || `<div class="empty">ماكو حلقات بعد.</div>`}
+  </div></section>${scriptSection}<section class="section"><div class="section-head"><h2>قد يعجبك أيضاً</h2></div><div class="grid">${getPublicStories().filter(s=>s.id!==story.id).slice(0,2).map(storyCard).join('')}</div></section>`;
 }
 
 function playerView(){
@@ -815,7 +931,7 @@ function renderPlayerProgress(){
 function seekAudio(seconds){ if(!audioEl) return; audioEl.currentTime=Math.max(0,Math.min(audioEl.duration||0,audioEl.currentTime+seconds)); syncProgressFromAudio(); }
 async function playRealAudio(reset=false){ const el=setAudioSource(state.player.audioSrc || DEMO_AUDIO_SRC); if(reset) el.currentTime=0; el.loop=state.player.kind==='fm'; el.playbackRate=state.player.speed==='1.5x'?1.5:state.player.speed==='1.25x'?1.25:1; updateMediaSession(); try{ await el.play(); state.player.playing=true; startTimer(); save(); }catch(err){ state.player.playing=false; stopTimer(); toast('اضغط تشغيل مرة ثانية حتى يسمح المتصفح بالصوت بالخلفية'); renderMiniPlayer(); }}
 function pauseRealAudio(){ if(audioEl) audioEl.pause(); stopTimer(); }
-function playEpisode(storyId, episodeId, auto=false){ const story=getStory(storyId); const ep=getEpisode(story,episodeId); if(!story || !ep) return; if(!ep.free){ toast('هذه الحلقة تفتح قريباً عند تفعيل الباقات'); return; } const src=resolveAudioSrc(ep.audioSrc,{allowDemo:true}); if(!src){ toast('لا يوجد صوت لهذه الحلقة بعد — ارفع MP3 من الإدارة'); return; } state.player={playing:true, kind:'episode', storyId, episodeId:ep.id, title:ep.title, subtitle:story.title+' · '+story.genre, audioSrc:src, progress:0, duration:180, speed: state.player.speed&&state.player.speed!=='LIVE'?state.player.speed:'1x'}; updateRecent(storyId); if(!auto) toast(isDemoAudio(ep.audioSrc)?'معاينة صوتية: '+ep.title:'بدأ تشغيل: '+ep.title); render(); playRealAudio(true); }
+function playEpisode(storyId, episodeId, auto=false){ const story=getStory(storyId); const ep=getEpisode(story,episodeId); if(!story || !ep) return; if(!ep.free){ toast('هذه الحلقة تفتح قريباً عند تفعيل الباقات'); return; } const src=resolveAudioSrc(ep.audioSrc,{allowDemo:true}); if(!src){ if(ep.script){ toast('الصوت غير متاح بعد — اقرأ النص من صفحة التفاصيل'); if(!auto) nav('detail:'+storyId); return; } toast('لا يوجد صوت لهذه الحلقة بعد — ارفع MP3 من الإدارة'); return; } state.player={playing:true, kind:'episode', storyId, episodeId:ep.id, title:ep.title, subtitle:story.title+' · '+story.genre, audioSrc:src, progress:0, duration:180, speed: state.player.speed&&state.player.speed!=='LIVE'?state.player.speed:'1x'}; updateRecent(storyId); if(!auto) toast(isDemoAudio(ep.audioSrc)?'معاينة صوتية: '+ep.title:'بدأ تشغيل: '+ep.title); render(); playRealAudio(true); }
 function playFM(){
   if(!isFmStreamReady()){ toast('البث غير متصل — أضف رابط بث حقيقي من الإدارة'); return; }
   if(!isFmLiveNow()){ toast('البث متوقف حالياً — فعّل «مباشر الآن» من الإدارة'); return; }
