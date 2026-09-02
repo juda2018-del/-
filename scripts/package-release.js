@@ -36,7 +36,7 @@ execSync(`cd "${www}" && zip -r "${zipPath}" .`, { stdio: 'inherit' });
 const manifest = {
   name: 'JAZAL',
   version: require(path.join(root, 'package.json')).version,
-  appVersion: 'jazal-ref-light-v1',
+  appVersion: 'jazal-prod-ready-v1',
   builtAt: new Date().toISOString(),
   webRoot: 'www/',
   zip: zipName,

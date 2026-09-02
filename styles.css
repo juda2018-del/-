@@ -611,5 +611,6 @@ svg{display:block}
 .modal-form textarea{min-height:96px}
 .modal-form .primary{background:var(--peach);color:var(--text);box-shadow:var(--glow-mint)}
 .modal-form .secondary{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.2)}
+.playbig[disabled]{opacity:.45;cursor:not-allowed;box-shadow:none}
 .player-control[disabled]{opacity:.35;pointer-events:none}
 code{font-size:11px;color:var(--primary)}

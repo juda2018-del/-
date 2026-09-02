@@ -38,7 +38,7 @@ const checks = [
   ['Episode navigation', /playNextEpisode/],
   ['Publish filter', /getPublicStories/],
   ['Admin guard', /function isAdmin/],
-  ['App version', /jazal-ref-light-v1/],
+  ['App version', /jazal-prod-ready-v1/],
 ];
 
 const firestoreRules = fs.readFileSync(path.join(root, 'firebase', 'firestore.rules'), 'utf8');

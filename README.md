@@ -7,7 +7,7 @@
 | | |
 |---|---|
 | **افتح التطبيق** | **https://temporary-prompt-bugle-ugzt59v.vercel.app** |
-| **الإصدار** | `jazal-ref-light-v1` |
+| **الإصدار** | `jazal-prod-ready-v1` |
 | **الثيم** | Fusion v4 — بنفسجي/وردي (هوية جَزَل) + زجاجي |
 | **Firebase** | `jazal-audio` |
 | **Bundle ID** | `iq.jeeltech.jazal` |
