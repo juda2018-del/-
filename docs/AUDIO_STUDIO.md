@@ -14,8 +14,9 @@ Generation is **not** publish. Public listeners never see TTS controls.
 7. Publish story/episode with existing admin controls (separate step)
 
 ## API
-- `GET /api/audio-studio/health` — provider readiness (no secrets)
-- `POST /api/audio-studio/generate` — admin Bearer token required; returns `audio/mpeg`
+- `GET /api/audio-health` — provider readiness (no secrets)
+- `POST /api/audio-generate` — admin Bearer token required; returns `audio/mpeg`
+- Compatibility aliases: `/api/audio-studio/health`, `/api/audio-studio/generate`
 
 ## Secrets (Vercel)
 - `OPENAI_API_KEY` (required for real generation)
