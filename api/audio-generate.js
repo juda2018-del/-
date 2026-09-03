@@ -84,7 +84,7 @@ function mergeMp3(buffers) {
 }
 
 async function verifyAdmin(authorizationHeader = '') {
-  const { createRemoteJWKSet, jwtVerify } = require('jose');
+  const { createRemoteJWKSet, jwtVerify } = await import('jose');
   const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'jazal-audio';
   const JWKS = createRemoteJWKSet(
     new URL('https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com')

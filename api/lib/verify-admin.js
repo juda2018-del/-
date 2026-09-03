@@ -1,15 +1,15 @@
 /**
  * Verify Firebase ID token + admin custom claim (server-side only).
- * Uses Google securetoken JWKS — no service account required for verification.
+ * Uses dynamic import of jose (ESM) for Vercel Node CJS compatibility.
  */
-const { createRemoteJWKSet, jwtVerify } = require('jose');
-
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'jazal-audio';
-const JWKS = createRemoteJWKSet(
-  new URL('https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com')
-);
 
 async function verifyAdminToken(authorizationHeader = '') {
+  const { createRemoteJWKSet, jwtVerify } = await import('jose');
+  const JWKS = createRemoteJWKSet(
+    new URL('https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com')
+  );
+
   const raw = String(authorizationHeader || '');
   const match = raw.match(/^Bearer\s+(.+)$/i);
   if (!match) {
