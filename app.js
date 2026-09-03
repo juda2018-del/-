@@ -13,7 +13,7 @@ const firebaseConfig = {
   measurementId: "G-B36438FY9N"
 };
 
-const APP_VERSION = 'jazal-prod-ready-v2';
+const APP_VERSION = 'jazal-audio-studio-v1';
 const LIVE_URL = 'https://jazal.vercel.app';
 const FIRESTORE_RULES_TEXT = `rules_version = '2';
 service cloud.firestore {
@@ -49,6 +49,18 @@ service firebase.storage {
     }
     match /audio/{allPaths=**} {
       allow read: if true;
+      allow write: if isAdmin()
+        && request.resource.size < 100 * 1024 * 1024
+        && request.resource.contentType.matches('audio/.*');
+    }
+    match /audio-studio/{allPaths=**} {
+      allow read: if isAdmin();
+      allow write: if isAdmin()
+        && request.resource.size < 100 * 1024 * 1024
+        && request.resource.contentType.matches('audio/.*');
+    }
+    match /audio-private/{allPaths=**} {
+      allow read: if isAdmin();
       allow write: if isAdmin()
         && request.resource.size < 100 * 1024 * 1024
         && request.resource.contentType.matches('audio/.*');
@@ -280,6 +292,12 @@ const defaultState = {
   submissions:[], mySubmissions:[], stories:baseStories,
   firebase:{mode:'firebase', projectId:'jazal-audio', authDomain:firebaseConfig.authDomain, firestoreReady:true, live:false, signedIn:false, isAdmin:false, authEmail:'', lastSync:'', error:'', cloudStatus:'جاهز'},
   admin:{tab:'overview'},
+  audioStudio:{
+    storyId:'last-door', episodeId:'last-door-1', text:'', narratorVoice:'onyx',
+    roleVoices:{}, musicUrl:'', sfxRain:false, sfxDoor:false, sfxFootsteps:false,
+    status:'idle', progress:'', error:'',
+    result:null
+  },
   schedule:[
     {time:'08:00 مساءً', title:'ليالي جزل', host:'ستوديو جزل', desc:'قصص قصيرة مختارة من جمهور جزل'},
     {time:'09:30 مساءً', title:'قصة للآخر', host:'ضيف الأسبوع', desc:'حلقة حوارية عن قصة حقيقية'},
@@ -316,7 +334,7 @@ function mergeStoriesPack(){
 }
 function upgradeContentPack(){
   state.stories=normalizeStories(state.stories);
-  if(state.contentVersion !== 'jazal-final-ui-font-audio-complete' && state.contentVersion !== APP_VERSION && state.contentVersion !== 'jazal-prod-ready-v1' && state.contentVersion !== 'jazal-prod-ready-v2'){
+  if(state.contentVersion !== 'jazal-final-ui-font-audio-complete' && state.contentVersion !== APP_VERSION && state.contentVersion !== 'jazal-prod-ready-v1' && state.contentVersion !== 'jazal-prod-ready-v2' && state.contentVersion !== 'jazal-audio-studio-v1'){
     state.stories = normalizeStories(structured(baseStories));
     state.contentVersion = APP_VERSION;
     state.recent = ['last-door','old-door','hotel-17'];
@@ -421,6 +439,13 @@ function resolveAudioSrc(src, {allowDemo=false}={}){
 }
 function availableAudio(src){ return resolveAudioSrc(src, {allowDemo:true}) || DEMO_AUDIO_SRC; }
 function isDemoAudio(src){ const value=String(src||'').trim(); return !value || value===DEMO_AUDIO_SRC || /jazal-demo\.mp3(?:\?|$)/.test(value); }
+function episodePlayableSrc(ep, {allowDemo=false}={}){
+  if(!ep) return null;
+  if(ep.free===false && !isAdmin()) return null;
+  // Prefer attached ready URL; never expose private paid audio to guests.
+  const preferred = ep.audioStatus==='ready' ? (ep.audioSrc || (ep.free!==false ? ep.audioUrl : '')) : ep.audioSrc;
+  return resolveAudioSrc(preferred, {allowDemo});
+}
 function isFmStreamReady(){ return !!(state.fm.streamUrl && String(state.fm.streamUrl).trim() && !isDemoAudio(state.fm.streamUrl)); }
 function isFmLiveNow(){ return !!(state.fm.live && isFmStreamReady()); }
 function isFmPreview(){ return !isFmStreamReady(); }
@@ -541,9 +566,9 @@ function detailView(storyId){
   const scriptSection=scripted.length?`<section class="section"><div class="section-head"><h2>نص الحلقة</h2><span class="soon">معاينة نصية</span></div>${scripted.map(ep=>`<div class="panel-card story-script-card"><h3>${esc(ep.title)}</h3><p class="muted tiny-note">الصوت غير متاح بعد — اقرأ النص حتى يُنتج التسجيل الصوتي.</p><div class="story-script">${formatScript(ep.script)}</div></div>`).join('')}</section>`:'';
   return `<section class="detail-hero"><div class="cover cover-art" style="background:${storyGradient(story)}">${safeCover(story,'cover-img')}</div><div class="detail-content"><span class="live-chip">${esc(story.genre)} · ★ ${esc(story.rating)} · ${esc(story.age)}</span><h1>${esc(story.title)}</h1><p>${esc(story.desc)}</p></div></section>
   <div class="detail-meta panel-card"><div><strong>${episodes.length}</strong><small>حلقة</small></div><div><strong>${esc(story.duration)}</strong><small>مدة كلية</small></div><div><strong>${esc(story.listens)}</strong><small>استماع</small></div></div>
-  <div class="cta-row"><button class="primary" data-play-episode="${story.id}|${episodes[0]?.id||''}" ${episodes[0]&&!resolveAudioSrc(episodes[0].audioSrc,{allowDemo:true})?'disabled':''}>▶ ${episodes[0]&&resolveAudioSrc(episodes[0].audioSrc,{allowDemo:true})?'تشغيل من البداية':'اقرأ النص أدناه'}</button><button class="secondary" data-fav="${story.id}">${isFav(story.id)?'♥ محفوظ':'♡ حفظ'}</button><button class="secondary" data-share-story="${story.id}">مشاركة</button></div>
+  <div class="cta-row"><button class="primary" data-play-episode="${story.id}|${episodes[0]?.id||''}" ${episodes[0]&&!episodePlayableSrc(episodes[0],{allowDemo:true})?'disabled':''}>▶ ${episodes[0]&&episodePlayableSrc(episodes[0],{allowDemo:true})?'تشغيل من البداية':'اقرأ النص أدناه'}</button><button class="secondary" data-fav="${story.id}">${isFav(story.id)?'♥ محفوظ':'♡ حفظ'}</button><button class="secondary" data-share-story="${story.id}">مشاركة</button></div>
   <section class="section"><div class="section-head"><h2>الحلقات</h2><span class="soon">${story.free||0} مجانية</span></div><div class="panel-card episodes-card">
-  ${episodes.map((ep,i)=>{ const active=state.player.storyId===story.id&&state.player.episodeId===ep.id; const hasAudio=!!resolveAudioSrc(ep.audioSrc,{allowDemo:true}); const hasScript=!!ep.script; return `<div class="episode ${active?'episode-active':''}"><button class="episode-index" data-play-episode="${story.id}|${ep.id}" ${hasAudio?'':'disabled'}>${i+1}</button><div><h4>${esc(ep.title)}${active?' · الآن':''}</h4><p>${esc(ep.duration)} · ${ep.free?'مجانية':'تفتح عند تفعيل الباقات'}${hasAudio?(isDemoAudio(ep.audioSrc)?' · معاينة صوتية':' · صوت خاص'):hasScript?' · نص فقط':' · بدون صوت'}</p></div>${ep.free?(hasAudio?`<button class="tiny-btn" data-play-episode="${story.id}|${ep.id}">${active?'مشغّل':'تشغيل'}</button>`:`<span class="soon">نص</span>`):`<span class="lock">قريباً</span>`}</div>`; }).join('') || `<div class="empty">ماكو حلقات بعد.</div>`}
+  ${episodes.map((ep,i)=>{ const active=state.player.storyId===story.id&&state.player.episodeId===ep.id; const hasAudio=!!episodePlayableSrc(ep,{allowDemo:true}); const hasScript=!!ep.script; return `<div class="episode ${active?'episode-active':''}"><button class="episode-index" data-play-episode="${story.id}|${ep.id}" ${hasAudio?'':'disabled'}>${i+1}</button><div><h4>${esc(ep.title)}${active?' · الآن':''}</h4><p>${esc(ep.duration)} · ${ep.free?'مجانية':'تفتح عند تفعيل الباقات'}${hasAudio?(isDemoAudio(episodePlayableSrc(ep,{allowDemo:true}))?' · معاينة صوتية':' · صوت خاص'):hasScript?' · نص فقط':' · بدون صوت'}${ep.audioStatus==='ready'?' · جاهز':ep.audioStatus==='generated'?' · مسودة صوت':''}</p></div>${ep.free?(hasAudio?`<button class="tiny-btn" data-play-episode="${story.id}|${ep.id}">${active?'مشغّل':'تشغيل'}</button>`:`<span class="soon">نص</span>`):`<span class="lock">قريباً</span>`}</div>`; }).join('') || `<div class="empty">ماكو حلقات بعد.</div>`}
   </div></section>${scriptSection}<section class="section"><div class="section-head"><h2>قد يعجبك أيضاً</h2></div><div class="grid">${getPublicStories().filter(s=>s.id!==story.id).slice(0,2).map(storyCard).join('')}</div></section>`;
 }
 
@@ -597,7 +622,293 @@ function accountView(){
   <section class="section"><div class="section-head"><h2>المحفوظات</h2><span>${favStories.length}</span></div><div class="grid">${favStories.length?favStories.slice(0,4).map(storyCard).join(''):`<div class="empty">احفظ أعمالك المفضلة من المكتبة.</div>`}</div></section>`;
 }
 
-function adminTabs(){ const tabs=[['overview','نظرة'],['content','المحتوى'],['episodes','الحلقات'],['fm','FM'],['schedule','الجدول'],['submissions','الجمهور'],['firebase','Firebase'],['backup','نسخ']]; return `<div class="tabs admin-tabs">${tabs.map(([id,label])=>`<button class="tab ${state.admin.tab===id?'active':''}" data-admin-tab="${id}">${label}</button>`).join('')}</div>`; }
+const STUDIO_VOICES = ['onyx','echo','ash','nova','shimmer','alloy','coral','fable','sage','ballad'];
+const STUDIO_SFX_PRESETS = {
+  rain: '',
+  door: '',
+  footsteps: ''
+};
+
+function detectScriptRoles(text=''){
+  const roles=new Set();
+  String(text||'').split('\n').forEach(line=>{
+    const m=String(line).match(/^\[([^\]]+)\]\s*$/);
+    if(m) roles.add(m[1].trim());
+  });
+  if(!roles.size) roles.add('راوي');
+  return [...roles];
+}
+function formatBytes(n=0){
+  const v=Number(n)||0;
+  if(v<1024) return v+' B';
+  if(v<1024*1024) return (v/1024).toFixed(1)+' KB';
+  return (v/(1024*1024)).toFixed(2)+' MB';
+}
+function formatClock(sec=0){
+  const s=Math.max(0, Math.round(Number(sec)||0));
+  const m=Math.floor(s/60);
+  const r=String(s%60).padStart(2,'0');
+  return `${m}:${r}`;
+}
+function syncAudioStudioFromSelection(){
+  const studio=state.audioStudio || (state.audioStudio=structured(defaultState.audioStudio));
+  const story=getStory(studio.storyId) || state.stories[0];
+  if(!story) return;
+  studio.storyId=story.id;
+  const ep=(story.episodeList||[]).find(e=>e.id===studio.episodeId) || story.episodeList?.[0];
+  studio.episodeId=ep?.id||'';
+  if(!studio.text){
+    studio.text = ep?.script || `[راوي]\n${story.desc||''}`;
+  }
+}
+function voiceSelectHtml(name, selected){
+  return `<select name="${name}">${STUDIO_VOICES.map(v=>`<option value="${v}" ${v===selected?'selected':''}>${v}</option>`).join('')}</select>`;
+}
+function audioStudioView(){
+  if(!isAdmin()) return `<div class="admin-lock panel-card"><b>استوديو الصوت محمي</b><p class="muted">توليد الصوت للأدمن فقط عبر Firebase Admin Claim.</p></div>`;
+  syncAudioStudioFromSelection();
+  const studio=state.audioStudio;
+  const story=getStory(studio.storyId);
+  const episodes=story?.episodeList||[];
+  const roles=detectScriptRoles(studio.text);
+  const busy=studio.status==='generating';
+  const result=studio.result;
+  const ep=episodes.find(e=>e.id===studio.episodeId);
+  return `<div class="panel-card"><b>Audio Studio · استوديو الصوت</b><p class="muted" style="margin:6px 0 0">أداة نشر داخلية فقط: تحويل نص الحلقة إلى ملف MP3 نهائي، ثم تنزيله/ربطه قبل النشر. لا يظهر أي TTS للمستخدم العام.</p><p class="muted tiny-note">Workflow: Generate → Preview → Download → Attach → Publish (منفصل)</p></div>
+  <form class="form-card" id="audioStudioForm">
+    <h2 style="margin-top:0">إعداد الحلقة</h2>
+    <div class="field"><label>القصة / Story</label><select name="storyId" id="studioStorySelect">${state.stories.map(s=>`<option value="${s.id}" ${s.id===studio.storyId?'selected':''}>${esc(s.title)}</option>`).join('')}</select></div>
+    <div class="field"><label>الحلقة / Episode</label><select name="episodeId" id="studioEpisodeSelect">${episodes.map(e=>`<option value="${e.id}" ${e.id===studio.episodeId?'selected':''}>${esc(e.title)}${e.audioStatus?` · ${e.audioStatus}`:''}</option>`).join('')||'<option value="">لا توجد حلقات</option>'}</select></div>
+    <div class="field"><label>نص الحلقة (يدعم [راوي] / [شخصية])</label><textarea name="text" id="studioText" rows="12" required placeholder="[راوي]&#10;كان الليل هادئاً...">${esc(studio.text||'')}</textarea></div>
+    <div class="field"><label>صوت الراوي الافتراضي</label>${voiceSelectHtml('narratorVoice', studio.narratorVoice||'onyx')}</div>
+    <div class="field"><label>أصوات الشخصيات</label><div class="role-voice-grid">${roles.map(role=>`<div class="role-voice-row"><span>${esc(role)}</span>${voiceSelectHtml('roleVoice:'+role, studio.roleVoices?.[role] || (role==='راوي'?studio.narratorVoice:'echo'))}</div>`).join('')}</div></div>
+    <div class="field"><label>موسيقى خلفية (رابط HTTPS اختياري)</label><input name="musicUrl" value="${esc(studio.musicUrl||'')}" placeholder="https://.../bed.mp3" /></div>
+    <div class="field"><label>مؤثرات اختيارية</label>
+      <label class="switch-row"><input type="checkbox" name="sfxRain" ${studio.sfxRain?'checked':''}/> مطر (يتطلب رابط جاهز في الإعداد)</label>
+      <label class="switch-row"><input type="checkbox" name="sfxDoor" ${studio.sfxDoor?'checked':''}/> باب</label>
+      <label class="switch-row"><input type="checkbox" name="sfxFootsteps" ${studio.sfxFootsteps?'checked':''}/> خطوات</label>
+      <p class="muted tiny-note">المؤثرات اختيارية. بدونها يُنتج النظام Voice-only MP3 طبيعي.</p>
+    </div>
+    <button class="primary" type="submit" style="width:100%" ${busy?'disabled':''}>${busy?'جاري التوليد…':'Generate Audio · توليد الصوت'}</button>
+    ${studio.progress?`<p class="muted tiny-note">${esc(studio.progress)}</p>`:''}
+    ${studio.error?`<p class="error-note">${esc(studio.error)}</p>`:''}
+  </form>
+  ${result?`<div class="panel-card studio-result-card"><b>Audio generated successfully</b>
+    <p class="muted" style="margin:8px 0 0">${esc(result.filename)} · ${formatBytes(result.size)} · ${formatClock(result.durationSec)} · ${esc(result.provider||'tts')}</p>
+    <audio controls src="${esc(result.objectUrl)}" style="width:100%;margin-top:12px"></audio>
+    <div class="cta-row" style="margin-top:12px">
+      <a class="primary" href="${esc(result.objectUrl)}" download="${esc(result.filename)}">Download MP3</a>
+      <button class="secondary" type="button" data-studio-regenerate ${busy?'disabled':''}>Regenerate</button>
+      <button class="secondary" type="button" data-studio-save-draft>Save draft</button>
+      <button class="primary" type="button" data-studio-attach>Attach to episode</button>
+    </div>
+    <p class="muted tiny-note">Attach يربط الملف بالحلقة دون نشر تلقائي. النشر يتم من تبويب المحتوى/الحلقات.</p>
+    ${ep?`<p class="muted tiny-note">حالة الحلقة الحالية: ${esc(ep.audioStatus||'none')} · free=${ep.free!==false}</p>`:''}
+  </div>`:''}`;
+}
+
+function collectStudioForm(form){
+  const fd=new FormData(form);
+  const roleVoices={};
+  [...form.querySelectorAll('select')].forEach(sel=>{
+    if(sel.name.startsWith('roleVoice:')) roleVoices[sel.name.slice('roleVoice:'.length)]=sel.value;
+  });
+  return {
+    storyId:String(fd.get('storyId')||''),
+    episodeId:String(fd.get('episodeId')||''),
+    text:String(fd.get('text')||''),
+    narratorVoice:String(fd.get('narratorVoice')||'onyx'),
+    roleVoices,
+    musicUrl:String(fd.get('musicUrl')||'').trim(),
+    sfxRain:!!fd.get('sfxRain'),
+    sfxDoor:!!fd.get('sfxDoor'),
+    sfxFootsteps:!!fd.get('sfxFootsteps')
+  };
+}
+function applyStudioSelectionToState(partial){
+  const studio=state.audioStudio;
+  Object.assign(studio, partial);
+  if(partial.storyId && !partial.text){
+    const story=getStory(partial.storyId);
+    const ep=(story?.episodeList||[]).find(e=>e.id===partial.episodeId) || story?.episodeList?.[0];
+    studio.episodeId=ep?.id||'';
+    studio.text=ep?.script || studio.text || `[راوي]\n${story?.desc||''}`;
+  }
+  save();
+}
+async function getAdminIdToken(){
+  if(!auth?.currentUser) throw new Error('يجب دخول الأدمن أولاً');
+  const tokenResult=await auth.currentUser.getIdTokenResult(true);
+  if(tokenResult.claims.admin!==true) throw new Error('حسابك ليس أدمن');
+  return tokenResult.token;
+}
+function revokeStudioObjectUrl(){
+  const prev=state.audioStudio?.result?.objectUrl;
+  if(prev) URL.revokeObjectURL(prev);
+}
+async function generateStudioAudio(e){
+  e?.preventDefault?.();
+  if(!requireAdmin('توليد الصوت')) return;
+  const form=qs('#audioStudioForm');
+  if(!form) return;
+  if(state.audioStudio.status==='generating'){ toast('توليد قيد التنفيذ — انتظر'); return; }
+  const data=collectStudioForm(form);
+  if(!data.text.trim()){ toast('أدخل نص الحلقة'); return; }
+  applyStudioSelectionToState(data);
+  state.audioStudio.status='generating';
+  state.audioStudio.progress='جاري الاتصال بخدمة TTS وإنتاج MP3 نهائي…';
+  state.audioStudio.error='';
+  save(); render();
+  try{
+    const token=await getAdminIdToken();
+    const sfxUrls=[];
+    // Optional SFX only when a real HTTPS asset is configured (no placeholders).
+    if(data.sfxRain && STUDIO_SFX_PRESETS.rain) sfxUrls.push(STUDIO_SFX_PRESETS.rain);
+    if(data.sfxDoor && STUDIO_SFX_PRESETS.door) sfxUrls.push(STUDIO_SFX_PRESETS.door);
+    if(data.sfxFootsteps && STUDIO_SFX_PRESETS.footsteps) sfxUrls.push(STUDIO_SFX_PRESETS.footsteps);
+    const payload={
+      storyId:data.storyId,
+      episodeId:data.episodeId,
+      text:data.text,
+      narratorVoice:data.narratorVoice,
+      roleVoices:data.roleVoices,
+      musicUrl:data.musicUrl,
+      sfxUrls
+    };
+    const res=await fetch('/api/audio-studio/generate', {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        Authorization:`Bearer ${token}`
+      },
+      body:JSON.stringify(payload)
+    });
+    if(!res.ok){
+      let msg='فشل توليد الصوت';
+      try{ const j=await res.json(); msg=j.error||msg; }catch(_){ msg=`فشل التوليد (${res.status})`; }
+      throw new Error(msg);
+    }
+    const buf=await res.arrayBuffer();
+    if(!buf.byteLength) throw new Error('الملف الناتج فارغ');
+    const blob=new Blob([buf], {type:'audio/mpeg'});
+    revokeStudioObjectUrl();
+    const objectUrl=URL.createObjectURL(blob);
+    const filename=res.headers.get('X-Jazal-Audio-Filename') || `jazal-${data.storyId}-${data.episodeId}.mp3`;
+    const size=Number(res.headers.get('X-Jazal-Audio-Size')||blob.size);
+    const durationSec=Number(res.headers.get('X-Jazal-Audio-Duration')||0);
+    const provider=res.headers.get('X-Jazal-Audio-Provider')||'tts';
+    state.audioStudio.result={ blob, objectUrl, filename, size, durationSec, provider, generatedAt:new Date().toISOString() };
+    state.audioStudio.status='done';
+    state.audioStudio.progress='Audio generated successfully — جاهز للتنزيل والمراجعة';
+    state.audioStudio.error='';
+    toast('تم إنتاج MP3 نهائي');
+  }catch(err){
+    state.audioStudio.status='error';
+    state.audioStudio.progress='';
+    state.audioStudio.error=err.message||String(err);
+    toast(state.audioStudio.error);
+  }
+  save(); render();
+}
+async function uploadStudioBlob(blob, {storyId, episodeId, paid=false}){
+  if(!blob || !storage) throw new Error('لا يوجد ملف للرفع أو Storage غير جاهز');
+  if(!requireAdmin('حفظ مسودة الصوت')) throw new Error('أدمن فقط');
+  const folder=paid?'audio-private':'audio-studio';
+  const safeName=`${storyId}-${episodeId}-${Date.now()}.mp3`;
+  const storagePath=`${folder}/${safeName}`;
+  const storageRef=ref(storage, storagePath);
+  toast('جاري رفع MP3…');
+  const url=await new Promise((resolve, reject)=>{
+    const task=uploadBytesResumable(storageRef, blob, {contentType:'audio/mpeg'});
+    task.on('state_changed', null, reject, async ()=>{
+      try{ resolve(await getDownloadURL(task.snapshot.ref)); }catch(e){ reject(e); }
+    });
+  });
+  return { url, storagePath };
+}
+async function saveStudioDraft(){
+  if(!requireAdmin('حفظ مسودة الصوت')) return;
+  const result=state.audioStudio.result;
+  if(!result?.blob) return toast('ولّد الصوت أولاً');
+  try{
+    const story=getStory(state.audioStudio.storyId);
+    const ep=getEpisode(story, state.audioStudio.episodeId);
+    if(!story || !ep) return toast('الحلقة غير موجودة');
+    const uploaded=await uploadStudioBlob(result.blob, {storyId:story.id, episodeId:ep.id, paid:ep.free===false});
+    ep.audioDraftUrl=uploaded.url;
+    ep.audioStoragePath=uploaded.storagePath;
+    ep.audioFormat='mp3';
+    ep.audioSize=result.size;
+    ep.audioDuration=result.durationSec;
+    ep.audioStatus='generated';
+    ep.audioGeneratedAt=result.generatedAt||new Date().toISOString();
+    ep.script=state.audioStudio.text;
+    save(); cloudSaveSoon('audio-studio-draft');
+    toast('تم حفظ المسودة في Storage (بدون نشر)');
+    render();
+  }catch(err){ toast(err.message||String(err)); }
+}
+async function attachStudioAudio(){
+  if(!requireAdmin('ربط الصوت بالحلقة')) return;
+  const result=state.audioStudio.result;
+  if(!result?.blob) return toast('ولّد الصوت أولاً');
+  try{
+    const story=getStory(state.audioStudio.storyId);
+    const ep=getEpisode(story, state.audioStudio.episodeId);
+    if(!story || !ep) return toast('الحلقة غير موجودة');
+    const paid=ep.free===false;
+    // Free episodes use public audio path; paid use private path (no anonymous leak).
+    const folder=paid?'audio-private':'audio';
+    const safeName=`${story.id}-${ep.id}-${Date.now()}.mp3`;
+    const storagePath=`${folder}/${safeName}`;
+    const storageRef=ref(storage, storagePath);
+    toast(paid?'رفع صوت مدفوع لمسار خاص…':'رفع الصوت وربطه بالحلقة…');
+    const url=await new Promise((resolve, reject)=>{
+      const task=uploadBytesResumable(storageRef, result.blob, {contentType:'audio/mpeg'});
+      task.on('state_changed', null, reject, async ()=>{
+        try{ resolve(await getDownloadURL(task.snapshot.ref)); }catch(e){ reject(e); }
+      });
+    });
+    ep.audioSrc=paid?'':url; // paid stays locked for public player until entitlement system
+    ep.audioUrl=url;
+    ep.audioStoragePath=storagePath;
+    ep.audioFormat='mp3';
+    ep.audioSize=result.size;
+    ep.audioDuration=result.durationSec;
+    ep.audioStatus='ready';
+    ep.audioGeneratedAt=result.generatedAt||new Date().toISOString();
+    ep.script=state.audioStudio.text;
+    if(result.durationSec){
+      const m=Math.floor(result.durationSec/60);
+      const s=String(result.durationSec%60).padStart(2,'0');
+      ep.duration=`${m}:${s}`;
+    }
+    save(); cloudSaveSoon('audio-studio-attach');
+    toast(paid?'تم الربط كصوت خاص (مدفوع) — غير منشور للمستمع العام':'تم ربط MP3 بالحلقة — راجع ثم انشر من تبويب المحتوى');
+    render();
+  }catch(err){ toast(err.message||String(err)); }
+}
+function bindAudioStudioEvents(){
+  const form=qs('#audioStudioForm');
+  if(form) form.onsubmit=generateStudioAudio;
+  const storySel=qs('#studioStorySelect');
+  if(storySel) storySel.onchange=()=>{
+    applyStudioSelectionToState({storyId:storySel.value, episodeId:'', text:''});
+    render();
+  };
+  const epSel=qs('#studioEpisodeSelect');
+  if(epSel) epSel.onchange=()=>{
+    const story=getStory(state.audioStudio.storyId);
+    const ep=getEpisode(story, epSel.value);
+    applyStudioSelectionToState({episodeId:epSel.value, text:ep?.script||state.audioStudio.text});
+    render();
+  };
+  qsa('[data-studio-regenerate]').forEach(btn=>btn.onclick=()=>generateStudioAudio());
+  qsa('[data-studio-save-draft]').forEach(btn=>btn.onclick=saveStudioDraft);
+  qsa('[data-studio-attach]').forEach(btn=>btn.onclick=attachStudioAudio);
+}
+
+function adminTabs(){ const tabs=[['overview','نظرة'],['content','المحتوى'],['episodes','الحلقات'],['audio','استوديو الصوت'],['fm','FM'],['schedule','الجدول'],['submissions','الجمهور'],['firebase','Firebase'],['backup','نسخ']]; return `<div class="tabs admin-tabs">${tabs.map(([id,label])=>`<button class="tab ${state.admin.tab===id?'active':''}" data-admin-tab="${id}">${label}</button>`).join('')}</div>`; }
 function adminView(){
   const tab=state.admin.tab||'overview';
   if(!isAdmin() && tab !== 'firebase'){
@@ -607,7 +918,8 @@ function adminView(){
   return `<h1 class="page-title">استوديو جزل</h1><p class="page-subtitle">استوديو إدارة محمي — المحتوى، الحلقات، FM، والجمهور مرتب للانطلاق.</p>${adminTabs()}${adminTabView(tab)}`;
 }
 function adminTabView(tab){
-if(tab==='overview') return `<div class="stats"><div class="stat"><strong>${state.stories.length}</strong><small>أعمال</small></div><div class="stat"><strong>${state.stories.reduce((a,s)=>a+(s.episodeList?.length||0),0)}</strong><small>حلقات</small></div><div class="stat"><strong>${state.submissions.length}</strong><small>قصص جمهور</small></div></div><div class="panel-card sync-card"><div class="row"><div><b>Firebase Live</b><p class="muted" style="margin:6px 0 0">${state.firebase.live?'متصل بـ Firestore — التغييرات تنتشر لكل المستخدمين':'جاهز للمزامنة — ارفع المحتوى من Firebase بعد الدخول كأدمن'}${state.firebase.error?' · '+esc(state.firebase.error):''}</p></div><span class="soon">${isAdmin()?'أدمن':'قراءة عامة'}</span></div></div><div class="cta-row"><button class="primary" data-admin-tab="content">إضافة قصة</button><button class="secondary" data-admin-tab="firebase">Firebase</button></div>`;
+if(tab==='overview') return `<div class="stats"><div class="stat"><strong>${state.stories.length}</strong><small>أعمال</small></div><div class="stat"><strong>${state.stories.reduce((a,s)=>a+(s.episodeList?.length||0),0)}</strong><small>حلقات</small></div><div class="stat"><strong>${state.submissions.length}</strong><small>قصص جمهور</small></div></div><div class="panel-card sync-card"><div class="row"><div><b>Firebase Live</b><p class="muted" style="margin:6px 0 0">${state.firebase.live?'متصل بـ Firestore — التغييرات تنتشر لكل المستخدمين':'جاهز للمزامنة — ارفع المحتوى من Firebase بعد الدخول كأدمن'}${state.firebase.error?' · '+esc(state.firebase.error):''}</p></div><span class="soon">${isAdmin()?'أدمن':'قراءة عامة'}</span></div></div><div class="cta-row"><button class="primary" data-admin-tab="content">إضافة قصة</button><button class="secondary" data-admin-tab="audio">استوديو الصوت</button><button class="secondary" data-admin-tab="firebase">Firebase</button></div>`;
+  if(tab==='audio') return audioStudioView();
   if(tab==='content') return `<div class="panel-card"><b>رفع المحتوى الحقيقي</b><p class="muted" style="margin:6px 0 0">ارفع MP3 لكل حلقة من هنا أو من تبويب الحلقات. الملف <code>jazal-demo.mp3</code> للاختبار فقط ولا يُعرض كمحتوى نهائي للمستخدمين بعد رفع الصوت الحقيقي.</p></div><div class="form-card"><h2 style="margin-top:0">إضافة قصة / مسلسل</h2><form id="addStoryForm"><div class="field"><label>العنوان</label><input name="title" required placeholder="اسم القصة" /></div><div class="field"><label>التصنيف</label><select name="genre"><option>رعب</option><option>جريمة</option><option>حب</option><option>واقعي</option><option>بودكاست</option><option>أطفال</option></select></div><div class="field"><label>إيموجي الغلاف</label><input name="emoji" value="🎧" /></div><div class="field"><label>وسم قصير</label><input name="tag" value="جزل Originals" /></div><div class="field"><label>الوصف</label><textarea name="desc" required placeholder="اكتب وصف مختصر وجذاب"></textarea></div><div class="field"><label>عنوان أول حلقة</label><input name="episodeTitle" value="الحلقة الأولى" /></div><div class="field"><label>رابط MP3 لأول حلقة اختياري</label><input name="audioSrc" placeholder="https://.../episode.mp3" /></div><div class="field"><label>أو ارفع ملف MP3</label><input name="audioFile" type="file" accept="audio/*" /></div><label class="switch-row"><input type="checkbox" name="published" checked /> منشور للجمهور</label><button class="primary" type="submit" style="width:100%">إضافة للمكتبة</button></form></div><section class="section"><div class="section-head"><h2>المحتوى الحالي</h2><span>${state.stories.length}</span></div><div class="admin-list">${state.stories.map(s=>`<div class="admin-item"><strong>${esc(s.title)}</strong><small>${esc(s.genre)} · ${storyEpisodeCount(s)} حلقة · ${s.featured?'اختيار اليوم · ':''}${s.published===false?'مخفي':'منشور'}</small><div class="admin-actions"><button class="tiny-btn" data-edit-story="${s.id}">تعديل</button><button class="tiny-btn" data-featured-story="${s.id}">اختيار اليوم</button><button class="tiny-btn" data-toggle-publish="${s.id}">${s.published===false?'نشر':'إخفاء'}</button><button class="tiny-btn" data-delete-story="${s.id}">حذف</button></div></div>`).join('')}</div></section>`;
   if(tab==='episodes') return `<div class="form-card"><h2 style="margin-top:0">إضافة حلقة لقصة موجودة</h2><form id="addEpisodeForm"><div class="field"><label>اختر القصة</label><select name="storyId">${state.stories.map(s=>`<option value="${s.id}">${esc(s.title)}</option>`).join('')}</select></div><div class="field"><label>عنوان الحلقة</label><input name="title" required placeholder="اسم الحلقة" /></div><div class="field"><label>مدة الحلقة</label><input name="duration" value="10:00" /></div><div class="field"><label>رابط MP3 اختياري</label><input name="audioSrc" placeholder="اتركه فارغ للصوت التجريبي" /></div><div class="field"><label>أو ارفع ملف MP3</label><input name="audioFile" type="file" accept="audio/*" /></div><label class="switch-row"><input type="checkbox" name="free" checked /> مجانية حالياً</label><button class="primary" type="submit" style="width:100%">إضافة الحلقة</button></form></div><section class="section"><div class="section-head"><h2>إدارة الحلقات</h2></div><div class="admin-list">${state.stories.map(s=>`<div class="admin-item"><strong>${esc(s.title)}</strong><small>${storyEpisodeCount(s)} حلقة</small>${(s.episodeList||[]).map((ep,i)=>`<div class="episode admin-episode"><div class="episode-index">${i+1}</div><div><h4>${esc(ep.title)}</h4><p>${esc(ep.duration)} · ${ep.free?'مجانية':'مقفلة'}${ep.audioSrc&&ep.audioSrc!==DEMO_AUDIO_SRC?' · MP3':' · Demo'}</p></div><div class="admin-actions"><button class="tiny-btn" data-move-episode="${s.id}|${ep.id}|up" ${i===0?'disabled':''}>↑</button><button class="tiny-btn" data-move-episode="${s.id}|${ep.id}|down" ${i===(s.episodeList.length-1)?'disabled':''}>↓</button><button class="tiny-btn" data-edit-episode="${s.id}|${ep.id}">تعديل</button><button class="tiny-btn" data-delete-episode="${s.id}|${ep.id}">حذف</button></div></div>`).join('')}</div>`).join('')}</div></section>`;
   if(tab==='fm') return `<div class="form-card"><h2 style="margin-top:0">تحديث جزل FM</h2><form id="fmForm"><div class="field"><label>اسم البرنامج الحالي</label><input name="title" value="${esc(state.fm.title)}" /></div><div class="field"><label>المقدم</label><input name="host" value="${esc(state.fm.host)}" /></div><div class="field"><label>ملاحظة البث</label><textarea name="note">${esc(state.fm.note)}</textarea></div><div class="field"><label>رابط البث / MP3 اختياري</label><input name="streamUrl" value="${esc(state.fm.streamUrl||'')}" placeholder="https://.../stream.mp3" /></div><label class="switch-row"><input type="checkbox" name="live" ${state.fm.live?'checked':''}/> مباشر الآن</label><button class="primary" type="submit" style="width:100%">حفظ FM</button></form></div>`;
@@ -899,6 +1211,7 @@ function bindEvents(){
   qsa('[data-copy-storage-rules]').forEach(el=>el.onclick=copyStorageRules);
   qsa('[data-open-player]').forEach(el=>el.onclick=e=>{e.stopPropagation();nav('player');});
   qsa('[data-seek]').forEach(el=>el.onclick=e=>{e.stopPropagation();seekAudio(Number(el.dataset.seek)||0);renderPlayerProgress();});
+  bindAudioStudioEvents();
 }
 
 function ensureAudio(){
@@ -931,7 +1244,7 @@ function renderPlayerProgress(){
 function seekAudio(seconds){ if(!audioEl) return; audioEl.currentTime=Math.max(0,Math.min(audioEl.duration||0,audioEl.currentTime+seconds)); syncProgressFromAudio(); }
 async function playRealAudio(reset=false){ const el=setAudioSource(state.player.audioSrc || DEMO_AUDIO_SRC); if(reset) el.currentTime=0; el.loop=state.player.kind==='fm'; el.playbackRate=state.player.speed==='1.5x'?1.5:state.player.speed==='1.25x'?1.25:1; updateMediaSession(); try{ await el.play(); state.player.playing=true; startTimer(); save(); }catch(err){ state.player.playing=false; stopTimer(); toast('اضغط تشغيل مرة ثانية حتى يسمح المتصفح بالصوت بالخلفية'); renderMiniPlayer(); }}
 function pauseRealAudio(){ if(audioEl) audioEl.pause(); stopTimer(); }
-function playEpisode(storyId, episodeId, auto=false){ const story=getStory(storyId); const ep=getEpisode(story,episodeId); if(!story || !ep) return; if(!ep.free){ toast('هذه الحلقة تفتح قريباً عند تفعيل الباقات'); return; } const src=resolveAudioSrc(ep.audioSrc,{allowDemo:true}); if(!src){ if(ep.script){ toast('الصوت غير متاح بعد — اقرأ النص من صفحة التفاصيل'); if(!auto) nav('detail:'+storyId); return; } toast('لا يوجد صوت لهذه الحلقة بعد — ارفع MP3 من الإدارة'); return; } state.player={playing:true, kind:'episode', storyId, episodeId:ep.id, title:ep.title, subtitle:story.title+' · '+story.genre, audioSrc:src, progress:0, duration:180, speed: state.player.speed&&state.player.speed!=='LIVE'?state.player.speed:'1x'}; updateRecent(storyId); if(!auto) toast(isDemoAudio(ep.audioSrc)?'معاينة صوتية: '+ep.title:'بدأ تشغيل: '+ep.title); render(); playRealAudio(true); }
+function playEpisode(storyId, episodeId, auto=false){ const story=getStory(storyId); const ep=getEpisode(story,episodeId); if(!story || !ep) return; if(!ep.free){ toast('هذه الحلقة تفتح قريباً عند تفعيل الباقات'); return; } const src=episodePlayableSrc(ep,{allowDemo:true}); if(!src){ if(ep.script){ toast('الصوت غير متاح بعد — اقرأ النص من صفحة التفاصيل'); if(!auto) nav('detail:'+storyId); return; } toast('لا يوجد صوت لهذه الحلقة بعد — ارفع MP3 من الإدارة'); return; } state.player={playing:true, kind:'episode', storyId, episodeId:ep.id, title:ep.title, subtitle:story.title+' · '+story.genre, audioSrc:src, progress:0, duration:ep.audioDuration||180, speed: state.player.speed&&state.player.speed!=='LIVE'?state.player.speed:'1x'}; updateRecent(storyId); if(!auto) toast(isDemoAudio(src)?'معاينة صوتية: '+ep.title:'بدأ تشغيل: '+ep.title); render(); playRealAudio(true); }
 function playFM(){
   if(!isFmStreamReady()){ toast('البث غير متصل — أضف رابط بث حقيقي من الإدارة'); return; }
   if(!isFmLiveNow()){ toast('البث متوقف حالياً — فعّل «مباشر الآن» من الإدارة'); return; }

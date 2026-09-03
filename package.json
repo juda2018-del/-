@@ -9,7 +9,8 @@
     "lint": "node scripts/lint-check.js",
     "typecheck": "node scripts/typecheck.js",
     "security": "node scripts/security-check.js",
-    "launch": "npm run build && npm run lint && npm run typecheck && npm run security",
+    "test:audio": "node scripts/test-audio-studio.js",
+    "launch": "npm run build && npm run lint && npm run typecheck && npm run security && npm run test:audio",
     "deploy:auto": "node scripts/launch-deploy.js",
     "deploy:preview": "node scripts/deploy-preview.js",
     "deploy:verify": "node scripts/verify-production.js",
@@ -34,6 +35,9 @@
     "@capacitor/ios": "^6.2.0",
     "@capacitor/splash-screen": "^6.0.3",
     "@capacitor/status-bar": "^6.0.2",
+    "ffmpeg-static": "^5.3.0",
+    "jose": "^6.2.10",
+    "openai": "^7.9.0",
     "vercel": "^59.10.0"
   },
   "devDependencies": {
