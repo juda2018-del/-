@@ -775,7 +775,7 @@ async function generateStudioAudio(e){
       musicUrl:data.musicUrl,
       sfxUrls
     };
-    const res=await fetch('/api/audio-studio/generate', {
+    const res=await fetch('/api/audio-generate', {
       method:'POST',
       headers:{
         'Content-Type':'application/json',
