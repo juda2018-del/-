@@ -3,12 +3,6 @@
   "name": "jazal",
   "buildCommand": "npm run build",
   "outputDirectory": "www",
-  "functions": {
-    "api/audio-studio/generate.js": {
-      "maxDuration": 60,
-      "memory": 1024
-    }
-  },
   "rewrites": [
     { "source": "/((?!api/|assets/|sw.js|manifest.json|robots.txt|firebase/).*)", "destination": "/index.html" }
   ],
