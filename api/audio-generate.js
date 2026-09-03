@@ -3,6 +3,8 @@
  * Admin-only Audio Studio generation endpoint.
  * Returns a real audio/mpeg MP3 (not a mock). Does not publish episodes.
  */
+const { verifyAdminToken } = require('./lib/verify-admin');
+
 async function readJson(req) {
   if (req.body && typeof req.body === 'object') return req.body;
   if (typeof req.body === 'string' && req.body.trim()) return JSON.parse(req.body);
@@ -84,34 +86,7 @@ function mergeMp3(buffers) {
 }
 
 async function verifyAdmin(authorizationHeader = '') {
-  const { createRemoteJWKSet, jwtVerify } = await import('jose');
-  const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'jazal-audio';
-  const JWKS = createRemoteJWKSet(
-    new URL('https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com')
-  );
-  const match = String(authorizationHeader || '').match(/^Bearer\s+(.+)$/i);
-  if (!match) {
-    const err = new Error('Authorization Bearer token required');
-    err.status = 401;
-    throw err;
-  }
-  let payload;
-  try {
-    ({ payload } = await jwtVerify(match[1].trim(), JWKS, {
-      issuer: `https://securetoken.google.com/${PROJECT_ID}`,
-      audience: PROJECT_ID,
-    }));
-  } catch (_) {
-    const err = new Error('Invalid or expired Firebase token');
-    err.status = 401;
-    throw err;
-  }
-  if (payload.admin !== true) {
-    const err = new Error('Admin custom claim required');
-    err.status = 403;
-    throw err;
-  }
-  return payload;
+  return verifyAdminToken(authorizationHeader);
 }
 
 async function synthesizeOpenAI({ text, voice }) {
