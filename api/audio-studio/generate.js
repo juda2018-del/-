@@ -1,6 +1,6 @@
 /**
  * POST /api/audio-studio/generate
- * Admin-only: script → TTS segments → ffmpeg merge → final MP3 binary.
+ * Admin-only: script → TTS segments → merge → final MP3 binary.
  * Does NOT publish episodes. Returns audio/mpeg for download/export.
  */
 const { verifyAdminToken } = require('../lib/verify-admin');
@@ -32,7 +32,15 @@ function safeFilename(storyId, episodeId) {
   return `jazal-${s}-${e}.mp3`;
 }
 
-module.exports = async function handler(req, res) {
+function readBody(req) {
+  if (req.body && typeof req.body === 'object') return req.body;
+  if (typeof req.body === 'string' && req.body.trim()) {
+    return JSON.parse(req.body);
+  }
+  return {};
+}
+
+async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
@@ -42,7 +50,7 @@ module.exports = async function handler(req, res) {
   try {
     await verifyAdminToken(req.headers.authorization || req.headers.Authorization);
 
-    const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
+    const body = readBody(req);
     const text = body.text || body.script || '';
     const storyId = body.storyId || 'story';
     const episodeId = body.episodeId || 'episode';
@@ -72,21 +80,23 @@ module.exports = async function handler(req, res) {
     res.setHeader('X-Jazal-Audio-Duration', String(merged.durationSec || 0));
     res.setHeader('X-Jazal-Audio-Format', 'mp3');
     res.setHeader('X-Jazal-Audio-Provider', provider.name);
+    res.setHeader('X-Jazal-Audio-Merge', merged.method || 'unknown');
     res.setHeader('X-Jazal-Audio-Segments', String(parsed.segments.length));
     res.setHeader('X-Jazal-Audio-Roles', encodeURIComponent(parsed.roles.join(',')));
     res.setHeader('Cache-Control', 'no-store');
     return res.status(200).send(merged.buffer);
   } catch (err) {
     const status = err.status || 500;
+    console.error('[audio-studio/generate]', err);
     return res.status(status).json({
       ok: false,
       error: err.message || 'Audio generation failed',
       code: err.code || 'GENERATE_FAILED',
     });
   }
-};
+}
 
-module.exports.config = {
+handler.config = {
   maxDuration: 60,
   api: {
     bodyParser: {
@@ -94,3 +104,5 @@ module.exports.config = {
     },
   },
 };
+
+module.exports = handler;

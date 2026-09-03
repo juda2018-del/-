@@ -1,11 +1,19 @@
 /**
- * Merge MP3 segment buffers (+ optional music/sfx) into one final MP3 via ffmpeg.
+ * Merge MP3 segment buffers (+ optional music/sfx) into one final MP3.
+ * Prefers ffmpeg when available; falls back to safe MP3 concatenation for voice-only.
  */
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { spawn } = require('child_process');
-const ffmpegPath = require('ffmpeg-static');
+
+function resolveFfmpeg() {
+  try {
+    const ffmpegPath = require('ffmpeg-static');
+    if (ffmpegPath && fs.existsSync(ffmpegPath)) return ffmpegPath;
+  } catch (_) {}
+  return null;
+}
 
 function run(cmd, args, timeoutMs = 120000) {
   return new Promise((resolve, reject) => {
@@ -28,7 +36,7 @@ function run(cmd, args, timeoutMs = 120000) {
   });
 }
 
-async function probeDurationSeconds(filePath) {
+async function probeDurationSeconds(ffmpegPath, filePath) {
   return new Promise((resolve) => {
     const child = spawn(ffmpegPath, ['-i', filePath], { stdio: ['ignore', 'pipe', 'pipe'] });
     let stderr = '';
@@ -50,10 +58,33 @@ async function downloadToFile(url, dest) {
   return dest;
 }
 
-async function mergeMp3Buffers(buffers, { musicUrl = '', sfxUrls = [], musicVolume = 0.12 } = {}) {
-  if (!Array.isArray(buffers) || !buffers.length) throw new Error('No audio segments to merge');
-  if (!ffmpegPath) throw new Error('ffmpeg-static binary missing');
+/** Strip ID3v2 so concatenated frames remain playable. */
+function stripId3(buf) {
+  if (!Buffer.isBuffer(buf) || buf.length < 10) return buf;
+  if (buf.slice(0, 3).toString() !== 'ID3') return buf;
+  const size = ((buf[6] & 0x7f) << 21) | ((buf[7] & 0x7f) << 14) | ((buf[8] & 0x7f) << 7) | (buf[9] & 0x7f);
+  const start = 10 + size;
+  return start < buf.length ? buf.subarray(start) : buf;
+}
 
+function estimateMp3DurationSec(sizeBytes) {
+  // Rough estimate for 128–192kbps speech: ~160kbps average
+  return Math.max(1, Math.round((Number(sizeBytes) || 0) * 8 / 160000));
+}
+
+function concatMp3Buffers(buffers) {
+  const parts = buffers.map(stripId3).filter((b) => b && b.length);
+  if (!parts.length) throw new Error('No audio segments to merge');
+  const buffer = Buffer.concat(parts);
+  return {
+    buffer,
+    durationSec: estimateMp3DurationSec(buffer.length),
+    size: buffer.length,
+    method: 'concat',
+  };
+}
+
+async function mergeWithFfmpeg(buffers, { musicUrl = '', sfxUrls = [], musicVolume = 0.12 } = {}, ffmpegPath) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'jazal-audio-'));
   try {
     const segmentFiles = buffers.map((buf, i) => {
@@ -99,11 +130,32 @@ async function mergeMp3Buffers(buffers, { musicUrl = '', sfxUrls = [], musicVolu
     const out = path.join(dir, 'final.mp3');
     if (current !== out) fs.copyFileSync(current, out);
     const buffer = fs.readFileSync(out);
-    const durationSec = await probeDurationSeconds(out);
-    return { buffer, durationSec, size: buffer.length };
+    const durationSec = await probeDurationSeconds(ffmpegPath, out);
+    return { buffer, durationSec, size: buffer.length, method: 'ffmpeg' };
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 }
 
-module.exports = { mergeMp3Buffers };
+async function mergeMp3Buffers(buffers, options = {}) {
+  if (!Array.isArray(buffers) || !buffers.length) throw new Error('No audio segments to merge');
+  const wantsMix = !!(String(options.musicUrl || '').trim() || (options.sfxUrls || []).length);
+  const ffmpegPath = resolveFfmpeg();
+
+  if (ffmpegPath) {
+    try {
+      return await mergeWithFfmpeg(buffers, options, ffmpegPath);
+    } catch (err) {
+      if (wantsMix) throw err;
+      // Voice-only can fall back to concat if ffmpeg fails on the host.
+    }
+  } else if (wantsMix) {
+    const err = new Error('Music/SFX mixing requires ffmpeg on the server. Generate voice-only, or enable ffmpeg-static install scripts.');
+    err.status = 503;
+    throw err;
+  }
+
+  return concatMp3Buffers(buffers);
+}
+
+module.exports = { mergeMp3Buffers, concatMp3Buffers, resolveFfmpeg };
