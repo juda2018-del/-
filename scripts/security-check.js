@@ -23,21 +23,23 @@ for (const [pattern, label] of secretPatterns) {
 
 if (!/function isAdmin\(/.test(appJs)) issues.push('missing isAdmin()');
 if (!/requireAdmin\(/.test(appJs)) issues.push('missing requireAdmin()');
-// Non-admin adminView must not render admin tab chrome (XSS/UX leak of admin surface).
-if (!/function adminView\(\)\{[\s\S]*?if\(!isAdmin\(\)\)\{[\s\S]*?adminTabView\('firebase'\)/.test(appJs.replace(/\n/g,' '))) {
-  // fallback simpler: ensure early !isAdmin gate exists before adminTabs in adminView
-}
-const adminViewMatch = appJs.match(/function adminView\(\)\{[\s\S]*?\nfunction /);
-if (adminViewMatch) {
-  const body = adminViewMatch[0];
-  const gate = body.indexOf('if(!isAdmin())');
-  const tabs = body.indexOf('adminTabs()');
-  if (gate < 0) issues.push('adminView missing !isAdmin early gate');
-  else if (tabs >= 0 && tabs < body.indexOf('return', gate + 10) === -1) {
-    // if adminTabs appears only after isAdmin path it's OK; if first return after !isAdmin includes adminTabs → bad
+// Non-admin adminView must not render admin tab chrome.
+{
+  const adminViewMatch = appJs.match(/function adminView\(\)\{[\s\S]*?\nfunction /);
+  if (!adminViewMatch) {
+    issues.push('missing adminView()');
+  } else {
+    const body = adminViewMatch[0];
+    const gate = body.indexOf('if(!isAdmin())');
+    if (gate < 0) {
+      issues.push('adminView missing !isAdmin early gate');
+    } else {
+      const afterGate = body.slice(gate);
+      const tabConst = afterGate.indexOf('const tab=');
+      const nonAdminSlice = tabConst >= 0 ? afterGate.slice(0, tabConst) : afterGate;
+      if (/adminTabs\(\)/.test(nonAdminSlice)) issues.push('adminView exposes adminTabs to non-admin');
+    }
   }
-  const nonAdminReturn = body.slice(gate, body.indexOf('const tab=', gate) > 0 ? body.indexOf('const tab=', gate) : body.length);
-  if (gate >= 0 && /adminTabs\(\)/.test(nonAdminReturn)) issues.push('adminView exposes adminTabs to non-admin');
 }
 
 if (/speechSynthesis/.test(appJs)) issues.push('browser speechSynthesis must not be used for production TTS');
