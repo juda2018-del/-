@@ -25,15 +25,16 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
 
       - name: Build
         run: npm ci && npm run build
 
+      # Do NOT set enablement:true — creating a Pages site requires owner/admin
+      # permissions the default GITHUB_TOKEN often lacks (Resource not accessible
+      # by integration). Enable once manually: Settings → Pages → GitHub Actions.
       - uses: actions/configure-pages@v5
-        with:
-          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:
