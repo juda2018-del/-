@@ -2,3 +2,6 @@ frames/
 __pycache__/
 *.pyc
 .DS_Store
+assets/audio/sfx_bed.wav
+assets/audio/final_mix.wav
+output/probe.json
