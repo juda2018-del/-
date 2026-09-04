@@ -1,0 +1,14 @@
+{
+  "name": "kahi-fayrouz-ad",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Motion graphics ad pipeline for كاهي فيروز — Baghdad",
+  "scripts": {
+    "audio": "python3 scripts/make_audio.py",
+    "frames": "python3 scripts/render_frames.py",
+    "encode": "python3 scripts/encode_video.py",
+    "render": "python3 scripts/render_all.py",
+    "video:render": "python3 scripts/render_all.py",
+    "preview": "python3 scripts/make_preview.py"
+  }
+}
