@@ -38,6 +38,7 @@
 - **PRODUCTION URL:** https://jazal.vercel.app
 - **READINESS:** **82%**
 - **CRITICAL BUGS:** Pages workflow enablement failure; TTS env missing; Hosting unpublished
+- **PR:** https://github.com/juda2018-del/-/pull/19  · commits `c713699`…`1e579e5`
 - **FIXED (this agent):**
   - Admin UI gate — hide admin tabs for non-admins (`app.js`)
   - Pages workflow — remove `enablement:true`, Node 22
