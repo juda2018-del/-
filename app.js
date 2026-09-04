@@ -910,11 +910,12 @@ function bindAudioStudioEvents(){
 
 function adminTabs(){ const tabs=[['overview','نظرة'],['content','المحتوى'],['episodes','الحلقات'],['audio','استوديو الصوت'],['fm','FM'],['schedule','الجدول'],['submissions','الجمهور'],['firebase','Firebase'],['backup','نسخ']]; return `<div class="tabs admin-tabs">${tabs.map(([id,label])=>`<button class="tab ${state.admin.tab===id?'active':''}" data-admin-tab="${id}">${label}</button>`).join('')}</div>`; }
 function adminView(){
-  const tab=state.admin.tab||'overview';
-  if(!isAdmin() && tab !== 'firebase'){
+  // Non-admins only see the login gate — never admin tab chrome or management UI.
+  if(!isAdmin()){
     const signedInNoAdmin = state.firebase.signedIn && !state.firebase.isAdmin;
-    return `<h1 class="page-title">استوديو جزل</h1><p class="page-subtitle">لوحة الإدارة محمية بصلاحية Firebase Admin Custom Claim.</p><div class="admin-lock panel-card"><b>دخول الإدارة</b><p class="muted">${signedInNoAdmin?'تم تسجيل الدخول لكن هذا الحساب ليس أدمن. اطلب تفعيل claim admin من Firebase Console.':'المحتوى يبقى للقراءة العامة، أما التعديل والحذف والرفع إلى Firebase فيحتاج حساب أدمن مع صلاحية admin.'}</p></div>${adminTabs()}${adminTabView('firebase')}`;
+    return `<h1 class="page-title">استوديو جزل</h1><p class="page-subtitle">لوحة الإدارة محمية بصلاحية Firebase Admin Custom Claim.</p><div class="admin-lock panel-card"><b>دخول الإدارة</b><p class="muted">${signedInNoAdmin?'تم تسجيل الدخول لكن هذا الحساب ليس أدمن. اطلب تفعيل claim admin من Firebase Console.':'المحتوى يبقى للقراءة العامة، أما التعديل والحذف والرفع إلى Firebase فيحتاج حساب أدمن مع صلاحية admin.'}</p></div>${adminTabView('firebase')}`;
   }
+  const tab=state.admin.tab||'overview';
   return `<h1 class="page-title">استوديو جزل</h1><p class="page-subtitle">استوديو إدارة محمي — المحتوى، الحلقات، FM، والجمهور مرتب للانطلاق.</p>${adminTabs()}${adminTabView(tab)}`;
 }
 function adminTabView(tab){

@@ -23,6 +23,25 @@ for (const [pattern, label] of secretPatterns) {
 
 if (!/function isAdmin\(/.test(appJs)) issues.push('missing isAdmin()');
 if (!/requireAdmin\(/.test(appJs)) issues.push('missing requireAdmin()');
+// Non-admin adminView must not render admin tab chrome.
+{
+  const adminViewMatch = appJs.match(/function adminView\(\)\{[\s\S]*?\nfunction /);
+  if (!adminViewMatch) {
+    issues.push('missing adminView()');
+  } else {
+    const body = adminViewMatch[0];
+    const gate = body.indexOf('if(!isAdmin())');
+    if (gate < 0) {
+      issues.push('adminView missing !isAdmin early gate');
+    } else {
+      const afterGate = body.slice(gate);
+      const tabConst = afterGate.indexOf('const tab=');
+      const nonAdminSlice = tabConst >= 0 ? afterGate.slice(0, tabConst) : afterGate;
+      if (/adminTabs\(\)/.test(nonAdminSlice)) issues.push('adminView exposes adminTabs to non-admin');
+    }
+  }
+}
+
 if (/speechSynthesis/.test(appJs)) issues.push('browser speechSynthesis must not be used for production TTS');
 if (/OPENAI_API_KEY|sk-[a-zA-Z0-9]{10,}/.test(appJs)) issues.push('TTS API key must not appear in client app.js');
 if (!fs.existsSync(path.join(root, 'api', 'audio-studio', 'generate.js'))) issues.push('missing audio studio generate API');
