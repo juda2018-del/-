@@ -173,13 +173,13 @@ def mix_final(sfx: Path) -> Path:
     # Place VO clips on timeline (seconds)
     # vo_01 @ 0.35, vo_02 @ 3.35, vo_03 @ 15.4, vo_04 @ 23.2
     filter_complex = (
-        "[1:a]adelay=350|350,volume=1.15[v1];"
-        "[2:a]adelay=3350|3350,volume=1.1[v2];"
-        "[3:a]adelay=15400|15400,volume=1.1[v3];"
-        "[4:a]adelay=23200|23200,volume=1.2[v4];"
-        "[0:a]volume=0.85[bed];"
+        "[1:a]adelay=350|350,volume=1.45[v1];"
+        "[2:a]adelay=3350|3350,volume=1.35[v2];"
+        "[3:a]adelay=15400|15400,volume=1.35[v3];"
+        "[4:a]adelay=23200|23200,volume=1.5[v4];"
+        "[0:a]volume=1.15[bed];"
         "[bed][v1][v2][v3][v4]amix=inputs=5:duration=first:dropout_transition=0,"
-        f"afade=t=in:st=0:d=0.4,afade=t=out:st={DURATION_SEC-0.7}:d=0.7[aout]"
+        f"loudnorm=I=-14:TP=-1.5:LRA=11,afade=t=in:st=0:d=0.4,afade=t=out:st={DURATION_SEC-0.7}:d=0.7[aout]"
     )
 
     run(
