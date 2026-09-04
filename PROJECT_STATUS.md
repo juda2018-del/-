@@ -10,7 +10,8 @@ JAZAL (جَزَل) — بودكاست وقصص صوتية (Web + Capacitor iOS/A
 `cursor/master-audit-jazal-harden-a125` (أحدث عمل تدقيق) · default: `main`
 
 ## LATEST COMMIT
-يُحدَّث مع كل push — آخر `main` قبل التدقيق: `7e2e730` — fix: repair production audio studio ESM auth flow
+فرع التدقيق: `d2903b4` — chore: simplify adminView security-check assertion
+آخر `main` قبل التدقيق: `7e2e730`
 
 ## STACK
 - Vanilla JS SPA (`app.js`) + CSS + PWA service worker
