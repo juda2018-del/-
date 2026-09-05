@@ -24,3 +24,8 @@ jobs:
           fi
           curl -fsS -X POST "$VERCEL_DEPLOY_HOOK"
           echo "Vercel production redeploy triggered."
+
+      - uses: actions/checkout@v4
+
+      - name: Verify live Vercel production
+        run: node scripts/verify-production.js
