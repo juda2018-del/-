@@ -30,7 +30,7 @@ jobs:
             'docs/AUDIO_STUDIO.md' \
             'assets/covers/studio-test.svg' > /tmp/pr17.patch
           git apply --3way /tmp/pr17.patch
-          if git diff --check; then :; else exit 1; fi
+          git diff --check
           git status --short
 
       - name: Commit and push merged Audio Studio changes
