@@ -51,8 +51,23 @@ if (/require\(['"]jose['"]\)/.test(audioGenerate) || /require\(['"]jose['"]\)/.t
   issues.push('jose CJS require in audio auth path (ERR_REQUIRE_ESM risk)');
 }
 if (!/verifyAdminToken/.test(verifyAdmin)) issues.push('missing verifyAdminToken');
+if (!/createTTSProvider|getConfiguredProviders/.test(audioGenerate)) issues.push('audio-generate must use shared TTS provider lib');
+if (!/parseScript/.test(audioGenerate)) issues.push('audio-generate must use shared script parser');
+if (!/mergeMp3Buffers/.test(audioGenerate)) issues.push('audio-generate must use shared merge lib');
+if (!/X-Jazal-Audio-Publish/.test(audioGenerate)) issues.push('generate must declare publish=false header');
+if (!/studio-test/.test(appJs)) issues.push('missing admin-only studio-test episode');
+if (!/adminOnly/.test(appJs)) issues.push('missing adminOnly story flag');
+if (!/adminOnly!==true/.test(appJs)) issues.push('public stories filter must exclude adminOnly');
 if (!/audio-studio/.test(storageRules)) issues.push('storage rules missing audio-studio path');
 if (!/audio-private/.test(storageRules)) issues.push('storage rules missing audio-private path');
+if (!/match \/covers\//.test(storageRules)) issues.push('storage rules missing covers path');
+if (!/match \/audio\//.test(storageRules)) issues.push('storage rules missing public audio path');
+if (!/match \/audio-private\/\{allPaths=\*\*\} \{\s*allow read: if isAdmin\(\);/s.test(storageRules)) {
+  issues.push('audio-private must be admin-read only');
+}
+if (!/match \/audio-studio\/\{allPaths=\*\*\} \{\s*allow read: if isAdmin\(\);/s.test(storageRules)) {
+  issues.push('audio-studio must be admin-read only');
+}
 if (!/token\.admin/.test(firestoreRules)) issues.push('firestore rules missing admin claim');
 if (!/token\.admin/.test(storageRules)) issues.push('storage rules missing admin claim');
 if (/allow write: if request\.auth != null;/.test(firestoreRules)) issues.push('insecure firestore write rule');
