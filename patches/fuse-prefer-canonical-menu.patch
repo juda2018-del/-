@@ -1,0 +1,39 @@
+diff --git a/app/restaurants/[restaurantId]/DynamicRestaurantClient.tsx b/app/restaurants/[restaurantId]/DynamicRestaurantClient.tsx
+index dcd9d1c..afd262c 100644
+--- a/app/restaurants/[restaurantId]/DynamicRestaurantClient.tsx
++++ b/app/restaurants/[restaurantId]/DynamicRestaurantClient.tsx
+@@ -118,7 +118,7 @@ export default function DynamicRestaurantClient({ restaurantId: restaurantIdProp
+       unsubscribeRestaurants();
+       unsubscribeMenu();
+     };
+-  }, []);
++  }, [restaurantId]);
+ 
+   useEffect(() => {
+     setCartCount(readFuseCart().reduce((sum, item) => sum + item.qty, 0));
+@@ -133,12 +133,19 @@ export default function DynamicRestaurantClient({ restaurantId: restaurantIdProp
+   }, [restaurantId, restaurants]);
+ 
+   const restaurantName = restaurant?.name || restaurant?.title || restaurant?.restaurantName || "المطعم";
+-  const items = useMemo(() => menu.filter((item) => {
+-    const sameRestaurant = item.restaurantId === restaurantId || item.restaurantId === restaurant?.documentId;
+-    const sameName = item.restaurantName === restaurantName || item.restaurant === restaurantName;
+-    const available = item.available !== false && item.isAvailable !== false;
+-    return available && (sameRestaurant || sameName);
+-  }), [menu, restaurant, restaurantId, restaurantName]);
++  // Prefer canonical catalog docs only. Legacy menu rows share Arabic restaurant
++  // names but use random IDs and break add-to-cart while menuLive stays true.
++  const items = useMemo(() => {
++    const filtered = menu.filter((item) => {
++      const sameRestaurant =
++        item.restaurantId === restaurantId || item.restaurantId === restaurant?.documentId;
++      const sameName = item.restaurantName === restaurantName || item.restaurant === restaurantName;
++      const available = item.available !== false && item.isAvailable !== false;
++      return available && (sameRestaurant || sameName);
++    });
++    const liveOnly = filtered.filter((item) => isCatalogMenuItemId(item.documentId));
++    return liveOnly.length ? liveOnly : filtered;
++  }, [menu, restaurant, restaurantId, restaurantName]);
+ 
+   function addItem(item: MenuDoc) {
+     if (!menuLive || !isCatalogMenuItemId(item.documentId)) {

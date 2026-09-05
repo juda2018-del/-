@@ -1,0 +1,47 @@
+--- a/.github/workflows/apply-mobile-responsive-fix.yml
++++ /dev/null
+@@ -1,49 +0,0 @@
+-name: Apply mobile responsive fix
+-
+-on:
+-  push:
+-    branches: [main]
+-    paths:
+-      - '.mobile-fix/**'
+-      - '.github/workflows/apply-mobile-responsive-fix.yml'
+-
+-permissions:
+-  contents: write
+-
+-jobs:
+-  apply-fix:
+-    runs-on: ubuntu-latest
+-    steps:
+-      - name: Checkout repository
+-        uses: actions/checkout@v4
+-        with:
+-          fetch-depth: 0
+-
+-      - name: Decode fixed files
+-        shell: bash
+-        run: |
+-          set -euo pipefail
+-          base64 -d .mobile-fix/app_page.tsx.gz.b64 | gzip -d > app/page.tsx
+-          base64 -d .mobile-fix/reels_page.tsx.gz.b64 | gzip -d > app/reels/page.tsx
+-          base64 -d .mobile-fix/restaurant_order_client.tsx.gz.b64 | gzip -d > app/restaurants/RestaurantOrderClient.tsx
+-          rm -rf .mobile-fix
+-          rm -f .github/workflows/apply-mobile-responsive-fix.yml
+-
+-      - name: Commit responsive fixes
+-        shell: bash
+-        run: |
+-          set -euo pipefail
+-          git config user.name "github-actions[bot]"
+-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+-          git add app/page.tsx app/reels/page.tsx app/restaurants/RestaurantOrderClient.tsx MOBILE_RESPONSIVE_FIX_AR.txt .mobile-fix .github/workflows/apply-mobile-responsive-fix.yml || true
+-          if git diff --cached --quiet; then
+-            echo "No changes to commit"
+-            exit 0
+-          fi
+-          git commit -m "Fix mobile responsive layouts"
+-          git push origin main

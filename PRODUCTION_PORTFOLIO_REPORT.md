@@ -51,17 +51,17 @@ Evidence: `/api/audio-health` → `ok:true`, `ttsConfigured:false`.
 | PROJECT | FUSE |
 | REPO | `juda2018-del/juda-food-app` |
 | CURRENT COMMIT | `3b60260` on `main` |
-| CURRENT STATE | Web LIVE · local `tsc`/`lint`/`build` PASS · Firestore canonical catalog PASS |
-| CHANGES MADE | **None pushed** (write 403). Local audit only. |
-| TESTS | `npx tsc --noEmit` PASS · `npm run lint` PASS · `npm run build` PASS · `npm run check:catalog` PASS |
+| CURRENT STATE | Web LIVE · local `tsc`/`lint`/`build` PASS · Firestore canonical catalog PASS · **add-to-cart blocked on live UI** |
+| CHANGES MADE | **None pushed** (write 403). Fix prepared locally + patch in `patches/fuse-prefer-canonical-menu.patch`. |
+| TESTS | `npx tsc --noEmit` PASS · `npm run lint` PASS · `npm run build` PASS · `npm run check:catalog` PASS · browser smoke on fuseiraq.com |
 | BUILD STATUS | PASS (local clone) |
-| CI STATUS | Obsolete workflow `apply-mobile-responsive-fix.yml` last failed 2026-07-23 (corrupt gzip). Triggers only on `.mobile-fix/**` — dormant unless those paths change. Should be deleted when write access exists. |
+| CI STATUS | Obsolete workflow `apply-mobile-responsive-fix.yml` last failed 2026-07-23 (corrupt gzip). Patch to delete: `patches/fuse-disable-obsolete-mobile-workflow.patch`. |
 | DEPLOYMENT STATUS | https://juda-food-app.vercel.app + https://www.fuseiraq.com LIVE |
-| REAL BLOCKERS | Agent cannot push fixes · Codemagic/Apple/Android signing not runnable here · e-payment gateway intentionally COD-only |
+| REAL BLOCKERS | **Cart:** restaurant detail lists legacy `menu` docs (random IDs / Arabic name match) alongside canonical docs. `menuLive=true` but add fails for non-canonical IDs. **Push 403** prevents shipping the filter fix. |
 | NEEDS CREDENTIAL | GitHub write for agent · Codemagic/App Store Connect · Android keystore · optional payment gateway |
-| NEXT ACTION | Grant write on `juda-food-app` → delete obsolete workflow → browser E2E order on live catalog → Codemagic after PASS |
+| NEXT ACTION | Grant write → apply `patches/fuse-prefer-canonical-menu.patch` → redeploy → retest add-to-cart → Codemagic |
 
-Notes: Customer restaurant route uses `DynamicRestaurantClient` with live catalog IDs. Older `RestaurantOrderClient` still has non-canonical fallback IDs (`fayrouz-1` etc.) — not used by `[restaurantId]` page, but should be aligned or removed when write is available. `/checkout` and `/account` return 404 by design (cart embeds checkout; account is `/profile`).
+Browser smoke (2026-09-05): Home/Restaurants/Reels/Profile/Cart OK · RTL · single bottom nav · Profile does not hang · Add-to-cart toast: «المنيو غير متصل…» when clicking legacy rows (باكلة/بورك). Canonical docs `fayrouz-kahi` etc. exist in Firestore with `restaurantId`. `/checkout` and `/account` 404 by design (checkout in `/cart`, account=`/profile`).
 
 ---
 
@@ -81,6 +81,8 @@ Notes: Customer restaurant route uses `DynamicRestaurantClient` with live catalo
 | REAL BLOCKERS | No GitHub access · production `/api/health` failing |
 | NEEDS CREDENTIAL | Connect private repo to Cursor Cloud Agent · Vercel env for health/integrations |
 | NEXT ACTION | Owner grants repo access → fix `/api/health` 500 → verify integrations show NEEDS CREDENTIAL not fake SUCCESS |
+
+Browser smoke: marketing/home, `/plans`, `/privacy` load. Guest dashboard shows numeric widgets (engagement/followers) — **treat as unverified marketing UI until repo proves live data**. `/api/health` remains HTTP 500.
 
 ---
 
@@ -122,6 +124,8 @@ Health snippet: `ai.status=NOT CONFIGURED`, `search.status=NEEDS CREDENTIAL`, `e
 | NEEDS CREDENTIAL | Repo access · Android SDK · keystore · Play credentials |
 | NEXT ACTION | Connect repo → web build → Capacitor Android release pipeline |
 
+Browser smoke: login shell + bottom nav load. Routes in HTML include `/onboarding` `/business` `/ai-scan` `/plans` `/launch-status`. No APK produced here.
+
 ---
 
 ## 6) FANCY HUB
@@ -140,6 +144,8 @@ Health snippet: `ai.status=NOT CONFIGURED`, `search.status=NEEDS CREDENTIAL`, `e
 | REAL BLOCKERS | No GitHub access · cannot verify Capacitor `iq.fancyhub.app` / `com.fancyhub.app` without source |
 | NEEDS CREDENTIAL | Repo access · Apple/Android signing · Codemagic · Firebase if private |
 | NEXT ACTION | Connect repo → full commerce + native audit |
+
+Browser smoke: Neon «The Fancy House» UI + Products listing with prices/Order Now (WhatsApp-style CTA). Direct `/products` `/cart` `/checkout` HTTP 404 — client nav, not Next routes. Bundle ids unverified without source.
 
 ---
 
