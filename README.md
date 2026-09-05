@@ -12,8 +12,9 @@
 | **الثيم** | Fusion v4 — بنفسجي/وردي (هوية جَزَل) + زجاجي |
 | **Firebase** | `jazal-audio` |
 | **Bundle ID** | `iq.jeeltech.jazal` |
+| **حالة المشاريع** | [`PRODUCTION_PORTFOLIO_REPORT.md`](./PRODUCTION_PORTFOLIO_REPORT.md) · [`PROJECT_STATUS.md`](./PROJECT_STATUS.md) |
 
-> الدومين `jazal.vercel.app` يُحدَّث لاحقاً عند ربطه بمشروع Vercel الجديد.
+> الإنتاج المُتحقَّق: https://jazal.vercel.app — لا تعتمد على Firebase Hosting / Pages حتى تُفعَّل.
 
 ## التشغيل
 

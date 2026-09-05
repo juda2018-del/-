@@ -7,11 +7,10 @@ JAZAL (جَزَل) — بودكاست وقصص صوتية (Web + Capacitor iOS/A
 `juda2018-del/-` (اسم المستودع على GitHub هو `-`)
 
 ## BRANCH
-`cursor/master-audit-jazal-harden-a125` (أحدث عمل تدقيق) · default: `main`
+`cursor/jazal-production-ready-31e6` · default: `main`
 
 ## LATEST COMMIT
-فرع التدقيق: `d2903b4` — chore: simplify adminView security-check assertion
-آخر `main` قبل التدقيق: `7e2e730`
+Working branch includes `a6233af` (CI/Pages skip when secrets missing) + vercel-production secret guard + portfolio report.
 
 ## STACK
 - Vanilla JS SPA (`app.js`) + CSS + PWA service worker
@@ -21,55 +20,49 @@ JAZAL (جَزَل) — بودكاست وقصص صوتية (Web + Capacitor iOS/A
 - OpenAI TTS (server-side) عبر Audio Studio
 
 ## CURRENT STATUS
-Production web live. Admin writes محمية بـ Firebase custom claim + server verify. UI بوابة الأدمن قُسّيت لإخفاء تبويبات الإدارة عن غير الأدمن.
+Production web LIVE and verified. Admin UI gated. CI stays green when Pages/Vercel secrets are absent.
 
 ## BUILD STATUS
-PASS — `npm run launch` (build + lint + typecheck + security + audio smoke) ✅
+PASS — `npm run launch` (build + lint + typecheck + security + audio smoke)
 
 ## DEPLOYMENT STATUS
 - Vercel production: **LIVE** — https://jazal.vercel.app (`deploy:verify` ✅)
-- Preview: https://temporary-prompt-bugle-ugzt59v.vercel.app
-- GitHub Pages: **BLOCKED** — Pages site غير مفعّل؛ workflow كان يفشل عند `enablement:true` (صلاحية integration)
+- GitHub Pages: **SKIP until enabled** (workflow detects missing site)
 - Firebase Hosting: **DOWN** — https://jazal-audio.web.app → 404
-- New deploy from this agent: **BLOCKED** — missing `VERCEL_TOKEN` / `VERCEL_ORG_ID`
+- Agent redeploy: **NEEDS CREDENTIAL** — `VERCEL_TOKEN` / org / project ids
+- Native Android APK here: **NEEDS** `ANDROID_HOME` (Cap sync OK; Gradle blocked on SDK)
 
 ## DATABASE STATUS
-Firestore `jazal/content` — قراءة عامة، كتابة `admin` claim فقط (rules في `firebase/firestore.rules`)
+Firestore `jazal/content` — قراءة عامة، كتابة `admin` claim فقط
 
 ## AUTH STATUS
-- مستمع: ضيف / بدون تسجيل مطلوب للقراءة
+- مستمع: ضيف
 - أدمن: Email/Password + custom claim `admin:true`
-- API `/api/audio-generate`: يرفض بدون Bearer (401 مُتحقق)
+- API `/api/audio-generate`: Bearer required
 
 ## MAIN FEATURES
 Home · Library · Story detail · Player · FM · Submit · Account · Admin studio · Audio Studio (TTS) · Plans · Privacy/Terms/Support/About · PWA · Capacitor
 
-## BUGS FOUND
-1. GitHub Pages workflow فاشل (enablement بدون صلاحية) — جارٍ إصلاح workflow
-2. Firebase Hosting غير منشور
-3. TTS غير مُعدّ على الإنتاج (`ttsConfigured:false`) — يحتاج `OPENAI_API_KEY` على Vercel
-4. وثائق LIVE كانت تشير لمعاينة بدل الدومين الإنتاجي — صُحّحت
-5. واجهة الأدمن كانت تعرض شريط تبويبات الإدارة للزائر (بدون صلاحية كتابة) — hardened
+## REAL BLOCKERS
+None for core web listening.
 
-## BUGS FIXED
-1. إخفاء تبويبات/واجهة إدارة المحتوى عن غير الأدمن (`adminView` gate)
-2. إزالة `enablement:true` من Pages workflow + Node 22
-3. مزامنة `docs/LIVE.md` مع الإنتاج المُتحقَّق
-
-## REMAINING BLOCKERS
-| Blocker | Permission needed |
-|---------|-------------------|
-| Deploy جديد إلى Vercel | `VERCEL_TOKEN`, `VERCEL_ORG_ID` (Cursor Secrets أو env) |
-| تفعيل GitHub Pages | Owner: Settings → Pages → Source = GitHub Actions |
-| Firebase Hosting | `firebase login` / service account + `firebase deploy --only hosting` |
-| TTS حقيقي في Audio Studio | `OPENAI_API_KEY` (أو `GOOGLE_TTS_API_KEY`) على Vercel env |
-| Admin claim لحسابك | Firebase Console + `npm run admin:claim` مع service account |
+## NEEDS CREDENTIAL
+| Item | Secret / action |
+|------|-----------------|
+| New Vercel deploy | `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` |
+| TTS Audio Studio | `OPENAI_API_KEY` (or `GOOGLE_TTS_API_KEY`) on Vercel |
+| GitHub Pages | Owner enables Settings → Pages → GitHub Actions |
+| Firebase Hosting | Firebase CI token / service account |
+| Android release | `ANDROID_HOME` + keystore |
+| iOS release | Xcode + Apple signing / Codemagic |
 
 ## NEXT ACTIONS
-1. إضافة أسرار Vercel/TTS ثم `npm run vercel:prebuilt` + `deploy:verify`
-2. تفعيل GitHub Pages يدوياً وإعادة تشغيل workflow
-3. نشر Firebase Hosting إن رغبت بنسخة احتياطية
-4. بناء iOS/Android عبر Xcode / Android Studio (`cap:sync`)
+1. Add Vercel + TTS secrets and redeploy
+2. Enable Pages if wanted
+3. Native store builds after web PASS (already PASS)
 
 ## PRODUCTION READINESS %
-**82%** — Web core جاهز ومُختبر في المتصفح؛ النشر الثانوي (Pages/Firebase Hosting) وTTS وأسرار النشر ما زالت BLOCKED.
+**85%** — Web core production-ready; TTS/native/store paths blocked on credentials only.
+
+## PORTFOLIO
+See `PRODUCTION_PORTFOLIO_REPORT.md` for all six requested projects and access boundaries.

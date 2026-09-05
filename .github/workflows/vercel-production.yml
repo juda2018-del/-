@@ -11,17 +11,43 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Require Vercel secrets
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          missing=0
+          for name in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID; do
+            eval "val=\$$name"
+            if [ -z "$val" ]; then
+              echo "::notice::$name is not set"
+              missing=1
+            fi
+          done
+          if [ "$missing" = "1" ]; then
+            echo "::notice::Skipping production deploy — add Vercel secrets then re-run this workflow."
+            echo "Production remains https://jazal.vercel.app until secrets are present."
+            echo "skip=true" >> "$GITHUB_ENV"
+          else
+            echo "skip=false" >> "$GITHUB_ENV"
+          fi
+
       - uses: actions/checkout@v4
+        if: env.skip != 'true'
 
       - uses: actions/setup-node@v4
+        if: env.skip != 'true'
         with:
           node-version: '20'
           cache: npm
 
       - name: Install and build
+        if: env.skip != 'true'
         run: npm ci && npm run build
 
       - name: Deploy to Vercel Production
+        if: env.skip != 'true'
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -31,5 +57,5 @@ jobs:
           vercel-args: '--prod'
 
       - name: Verify production build
-        if: success()
+        if: env.skip != 'true' && success()
         run: sleep 15 && npm run deploy:verify
