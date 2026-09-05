@@ -1,0 +1,48 @@
+name: Port Audio Studio PR17 onto current main
+
+on:
+  push:
+    branches:
+      - cursor/audio-studio-production-ready-main-20260905
+
+permissions:
+  contents: write
+
+jobs:
+  port:
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply PR17 changes with three-way merge
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin refs/pull/17/head:pr17
+          git diff 7e2e73024f2b3843837d50c0af44c624ca368f24 pr17 -- \
+            'app.js' \
+            'scripts/security-check.js' \
+            'scripts/verify-production.js' \
+            'docs/AUDIO_STUDIO.md' \
+            'assets/covers/studio-test.svg' > /tmp/pr17.patch
+          git apply --3way /tmp/pr17.patch
+          if git diff --check; then :; else exit 1; fi
+          git status --short
+
+      - name: Commit and push merged Audio Studio changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo 'No remaining PR17 changes to commit.'
+            exit 0
+          fi
+          git config user.name 'Cursor Agent'
+          git config user.email 'cursoragent@cursor.com'
+          git add app.js scripts/security-check.js scripts/verify-production.js docs/AUDIO_STUDIO.md assets/covers/studio-test.svg
+          git commit -m 'feat: port Audio Studio hardening onto current main [skip ci]'
+          git push origin HEAD:cursor/audio-studio-production-ready-main-20260905
