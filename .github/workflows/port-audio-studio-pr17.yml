@@ -36,7 +36,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet; then
+          if git diff HEAD --quiet; then
             echo 'No remaining PR17 changes to commit.'
             exit 0
           fi
