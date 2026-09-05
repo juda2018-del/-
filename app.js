@@ -93,7 +93,13 @@ let audioEl = null;
 let playerTimer = null;
 let deferredInstallPrompt = null;
 
-const STORIES_PACK = 'jazal-stories-last-door-v1';
+const STORIES_PACK = 'jazal-stories-studio-test-v1';
+const STUDIO_TEST_SCRIPT = `[راوي]
+هذا اختبار قصير لاستوديو صوت جزل.
+[ضيف]
+مرحباً، هل تسمعني بوضوح؟
+[راوي]
+نعم، الصوت واضح. انتهت التجربة بنجاح.`;
 const LAST_DOOR_EP1_SCRIPT = `كانت الساعة تقترب من الثانية بعد منتصف الليل.
 
 المدينة هادئة بشكل غريب، والمطر يضرب زجاج النافذة كأنه يحاول أن يخبر أحداً بشيء.
@@ -182,6 +188,14 @@ const LAST_DOOR_EP1_SCRIPT = `كانت الساعة تقترب من الثاني
 نهاية الحلقة الأولى.`;
 
 const baseStories = [
+  {
+    id:'studio-test', title:'اختبار استوديو الصوت', genre:'بودكاست', emoji:'🎙️', tag:'داخلي · أدمن فقط', mood:'اختبار', age:'عام', featured:false, published:false, adminOnly:true,
+    desc:'حلقة اختبار داخلية قصيرة للتحقق من Generate → Preview → Download → Attach → Publish. غير ظاهرة للمستمع العام.',
+    color:'linear-gradient(145deg,#1a1f2e,#334155 52%,#94a3b8)', rating:'داخلي', episodes:1, free:1, listens:'0', duration:'1د',
+    episodeList:[
+      {id:'studio-test-1', title:'حلقة اختبار قصيرة', duration:'00:45', free:true, audioSrc:'', audioStatus:'none', script:STUDIO_TEST_SCRIPT}
+    ]
+  },
   {
     id:'last-door', title:'الباب الأخير', genre:'جريمة', emoji:'🚪', tag:'جزل Originals', mood:'تشويق', age:'+16', featured:true, published:true,
     desc:'آدم يبحث عن أخيه سامي المختفي. رسالة مجهولة، مكالمة مقطوعة، وموعد عند محطة القطار القديمة — وكل خطوة تقوده لشيء أخطر.',
@@ -293,7 +307,7 @@ const defaultState = {
   firebase:{mode:'firebase', projectId:'jazal-audio', authDomain:firebaseConfig.authDomain, firestoreReady:true, live:false, signedIn:false, isAdmin:false, authEmail:'', lastSync:'', error:'', cloudStatus:'جاهز'},
   admin:{tab:'overview'},
   audioStudio:{
-    storyId:'last-door', episodeId:'last-door-1', text:'', narratorVoice:'onyx',
+    storyId:'studio-test', episodeId:'studio-test-1', text:STUDIO_TEST_SCRIPT, narratorVoice:'onyx',
     roleVoices:{}, musicUrl:'', sfxRain:false, sfxDoor:false, sfxFootsteps:false,
     status:'idle', progress:'', error:'',
     result:null
@@ -326,11 +340,33 @@ function mergeStoriesPack(){
   const ids=new Set((state.stories||[]).map(s=>s.id));
   baseStories.forEach(base=>{
     if(!ids.has(base.id)) state.stories.unshift(structured(base));
-    else if(base.id==='last-door'){
-      const idx=state.stories.findIndex(s=>s.id==='last-door');
-      if(idx>=0) state.stories[idx]=structured(base);
+    else if(base.id==='last-door' || base.id==='studio-test'){
+      const idx=state.stories.findIndex(s=>s.id===base.id);
+      if(idx>=0){
+        // Keep any attached audio metadata while refreshing script/admin flags.
+        const prev=state.stories[idx];
+        const next=structured(base);
+        if(base.id==='studio-test' && prev?.episodeList?.[0] && next.episodeList?.[0]){
+          const keep=['audioSrc','audioUrl','audioDraftUrl','audioStoragePath','audioFormat','audioSize','audioDuration','audioStatus','audioGeneratedAt'];
+          keep.forEach(k=>{ if(prev.episodeList[0][k]!=null) next.episodeList[0][k]=prev.episodeList[0][k]; });
+        }
+        state.stories[idx]=next;
+      }
     }
   });
+}
+function sanitizeAudioStudioState(){
+  const studio=state.audioStudio || (state.audioStudio=structured(defaultState.audioStudio));
+  if(!studio.storyId) studio.storyId='studio-test';
+  if(!studio.episodeId) studio.episodeId='studio-test-1';
+  if(studio.result){
+    const hasLiveBlob = typeof Blob !== 'undefined' && studio.result.blob instanceof Blob && studio.result.blob.size > 0;
+    if(!hasLiveBlob){
+      studio.result=null;
+      if(studio.status==='done' || studio.status==='generating') studio.status='idle';
+      studio.progress='';
+    }
+  }
 }
 function upgradeContentPack(){
   state.stories=normalizeStories(state.stories);
@@ -349,9 +385,27 @@ function upgradeContentPack(){
   }
   state.contentVersion = APP_VERSION;
   ensureGuestState();
+  sanitizeAudioStudioState();
 }
 upgradeContentPack();
-function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function save(){
+  // Never persist Blob / object URLs — they are session-only draft audio.
+  const snapshot = structured(state);
+  if(snapshot.audioStudio){
+    if(snapshot.audioStudio.result){
+      const r=snapshot.audioStudio.result;
+      snapshot.audioStudio.result={
+        filename:r.filename||'',
+        size:r.size||0,
+        durationSec:r.durationSec||0,
+        provider:r.provider||'',
+        generatedAt:r.generatedAt||'',
+        draftOnly:true
+      };
+    }
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+}
 function qs(sel){ return document.querySelector(sel); }
 function qsa(sel){ return [...document.querySelectorAll(sel)]; }
 function app(){ return qs('#app'); }
@@ -379,9 +433,14 @@ function isFav(id){ return state.favorites.includes(id); }
 function updateRecent(id){ state.recent=[id,...state.recent.filter(x=>x!==id)].slice(0,8); }
 function logoIcon(){ return `<img class="jazal-mark" src="assets/jazal-mark.svg?v=${APP_VERSION}" alt="شعار جزل" />`; }
 function getStory(id){ return state.stories.find(s=>s.id===id); }
-function getPublicStories(){ return state.stories.filter(s=>s.published!==false); }
+function getPublicStories(){ return state.stories.filter(s=>s.published!==false && s.adminOnly!==true); }
 function normalizeStories(list){
-  return (list||[]).map(s=>({published:true, ...s, published:s.published!==false}));
+  return (list||[]).map(s=>{
+    const out={...s};
+    out.published = s.published === false ? false : true;
+    if(s.adminOnly===true) out.adminOnly=true;
+    return out;
+  });
 }
 function getEpisode(story, id){ return story?.episodeList?.find(e=>e.id===id) || story?.episodeList?.[0]; }
 function getEpisodeIndex(story, epId){ return (story?.episodeList||[]).findIndex(e=>e.id===epId); }
@@ -511,7 +570,7 @@ function homeView(){
   const stories=getPublicStories();
   const featured=stories.find(s=>s.featured)||stories[0];
   const firstEpisode=featured?.episodeList?.[0];
-  const recentStories=state.recent.map(getStory).filter(s=>s&&s.published!==false).slice(0,4);
+  const recentStories=state.recent.map(getStory).filter(s=>s&&s.published!==false&&s.adminOnly!==true).slice(0,4);
   return `<section class="home-hero premium-hero">
     <div class="orbit o1"></div><div class="orbit o2"></div><div class="halo"></div>
     <div class="hero-topline"><span class="live-chip"><span class="pulse"></span>اختيار اليوم</span><span>بودكاست وقصص صوتية</span></div>
@@ -557,7 +616,7 @@ function libraryView(){
 
 function detailView(storyId){
   const story=getStory(storyId);
-  if(!story || (story.published===false && !isAdmin())){
+  if(!story || ((story.published===false || story.adminOnly===true) && !isAdmin())){
     return `<h1 class="page-title">غير متاح</h1><p class="page-subtitle">هذه القصة مخفية أو غير موجودة.</p><div class="cta-row"><button class="primary" data-view="library">عودة للمكتبة</button></div>`;
   }
   updateRecent(story.id);
@@ -758,6 +817,7 @@ async function generateStudioAudio(e){
   state.audioStudio.status='generating';
   state.audioStudio.progress='جاري الاتصال بخدمة TTS وإنتاج MP3 نهائي…';
   state.audioStudio.error='';
+  // Generate = draft only. Never flip story/episode published flags here.
   save(); render();
   try{
     const token=await getAdminIdToken();
@@ -790,6 +850,9 @@ async function generateStudioAudio(e){
     }
     const buf=await res.arrayBuffer();
     if(!buf.byteLength) throw new Error('الملف الناتج فارغ');
+    const bytes=new Uint8Array(buf);
+    const looksMp3 = bytes.length > 100 && (bytes[0] === 0xff || (bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33));
+    if(!looksMp3) throw new Error('الملف الناتج ليس MP3 صالحاً');
     const blob=new Blob([buf], {type:'audio/mpeg'});
     revokeStudioObjectUrl();
     const objectUrl=URL.createObjectURL(blob);
@@ -797,11 +860,19 @@ async function generateStudioAudio(e){
     const size=Number(res.headers.get('X-Jazal-Audio-Size')||blob.size);
     const durationSec=Number(res.headers.get('X-Jazal-Audio-Duration')||0);
     const provider=res.headers.get('X-Jazal-Audio-Provider')||'tts';
-    state.audioStudio.result={ blob, objectUrl, filename, size, durationSec, provider, generatedAt:new Date().toISOString() };
+    state.audioStudio.result={ blob, objectUrl, filename, size, durationSec, provider, generatedAt:new Date().toISOString(), draftOnly:true };
     state.audioStudio.status='done';
-    state.audioStudio.progress='Audio generated successfully — جاهز للتنزيل والمراجعة';
+    state.audioStudio.progress='Audio generated successfully — مسودة فقط (لم يُنشر). جاهز للتنزيل والمراجعة';
     state.audioStudio.error='';
-    toast('تم إنتاج MP3 نهائي');
+    // Mark episode as draft-generated without publishing or attaching.
+    const story=getStory(data.storyId);
+    const ep=getEpisode(story, data.episodeId);
+    if(ep){
+      ep.audioStatus='generated';
+      ep.script=data.text;
+      // Do not set audioSrc / published here.
+    }
+    toast('تم إنتاج MP3 نهائي (مسودة — بدون نشر)');
   }catch(err){
     state.audioStudio.status='error';
     state.audioStudio.progress='';
@@ -884,7 +955,7 @@ async function attachStudioAudio(){
       ep.duration=`${m}:${s}`;
     }
     save(); cloudSaveSoon('audio-studio-attach');
-    toast(paid?'تم الربط كصوت خاص (مدفوع) — غير منشور للمستمع العام':'تم ربط MP3 بالحلقة — راجع ثم انشر من تبويب المحتوى');
+    toast(paid?'تم الربط كصوت خاص (مدفوع) — غير منشور للمستمع العام':(story.published===false || story.adminOnly)?'تم ربط MP3 — القصة ما زالت مسودة/داخلية حتى تنشرها من تبويب المحتوى':'تم ربط MP3 بالحلقة — راجع ثم انشر من تبويب المحتوى');
     render();
   }catch(err){ toast(err.message||String(err)); }
 }
