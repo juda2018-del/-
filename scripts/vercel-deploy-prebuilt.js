@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 /**
- * Deploy prebuilt www/ to the existing JAZAL Vercel project (production).
+ * Deploy JAZAL to the existing Vercel production project.
+ * Deploys from repo root so BOTH www/ (static) and api/ (serverless) update together.
+ *
  * Requires a real API token — not a vcn_* claim token.
  *
  *   VERCEL_TOKEN=... VERCEL_ORG_ID=team_... npm run vercel:prebuilt
@@ -19,10 +21,13 @@ function fail(msg) {
 }
 
 if (!TOKEN || TOKEN.startsWith('vcn_')) {
-  fail('VERCEL_TOKEN missing or invalid (vcn_* claim tokens cannot deploy to production).\nCreate one: https://vercel.com/account/tokens');
+  fail(
+    'VERCEL_TOKEN missing or invalid (vcn_* claim tokens cannot deploy to production).\n' +
+      'Create one: https://vercel.com/account/tokens'
+  );
 }
 if (!ORG_ID) {
-  fail('VERCEL_ORG_ID missing. Team juda12 → Settings → General → Team ID (team_…)');
+  fail('VERCEL_ORG_ID missing. Team Settings → General → Team ID (team_…)');
 }
 
 const root = path.join(__dirname, '..');
@@ -33,6 +38,8 @@ console.log('→ Building www/');
 const build = spawnSync('npm', ['run', 'build'], { cwd: root, stdio: 'inherit', shell: false });
 if (build.status !== 0) process.exit(build.status ?? 1);
 if (!fs.existsSync(www)) fail('Missing www/ after build');
+if (!fs.existsSync(path.join(root, 'api', 'audio-health.js'))) fail('Missing api/audio-health.js');
+if (!fs.existsSync(path.join(root, 'api', 'audio-generate.js'))) fail('Missing api/audio-generate.js');
 
 fs.mkdirSync(vercelDir, { recursive: true });
 fs.writeFileSync(
@@ -41,11 +48,13 @@ fs.writeFileSync(
 );
 
 const env = { ...process.env, VERCEL_TOKEN: TOKEN };
-console.log(`→ Deploying www/ to project ${PROJECT_ID} (production)`);
+console.log(`→ Deploying repo root (www + api) to project ${PROJECT_ID} (production)`);
+// IMPORTANT: deploy from repository root so /api serverless functions are included.
+// Deploying only www/ leaves stale API routes on Production.
 const deploy = spawnSync(
   'npx',
-  ['vercel', 'deploy', '--prebuilt', '--prod', '--yes'],
-  { cwd: www, stdio: 'inherit', env, shell: false }
+  ['vercel', 'deploy', '--prod', '--yes', '--force'],
+  { cwd: root, stdio: 'inherit', env, shell: false }
 );
 
 if (deploy.status === 0) {

@@ -9,7 +9,7 @@ const OPENAI_VOICES = new Set([
 ]);
 
 function createOpenAIProvider() {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = String(process.env.OPENAI_API_KEY || '').trim();
   if (!apiKey) {
     const err = new Error('OPENAI_API_KEY is not configured');
     err.status = 503;

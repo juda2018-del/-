@@ -68,9 +68,19 @@ async function checkAudioApi(label, url) {
     console.log(`${authOk ? '✓' : '✗'} ${label} audio-generate auth gate: HTTP ${genRes.status} ${genBody.code || genBody.error || ''}`);
 
     if (!health.ttsConfigured) {
-      console.log(`⚠ ${label}: OPENAI_API_KEY not configured on this deployment (real MP3 generate blocked)`);
+      console.log(
+        `⚠ ${label}: OPENAI_API_KEY not configured on this deployment (real MP3 generate blocked). ` +
+          'Set it in Vercel → Project → Settings → Environment Variables → Production, then redeploy.'
+      );
+    } else {
+      console.log(`✓ ${label}: TTS providers ready: ${(health.providers || []).join(', ') || 'unknown'}`);
     }
 
+    if (health.deployment?.commit) {
+      console.log(`i ${label}: deployment commit ${String(health.deployment.commit).slice(0, 12)} env=${health.deployment.env || 'n/a'}`);
+    }
+
+    // Auth/API contract must pass. TTS readiness is reported separately for FINAL READY.
     return healthOk && aliasOk && authOk;
   } catch (e) {
     console.log(`✗ ${label} audio API: ${e.message}`);

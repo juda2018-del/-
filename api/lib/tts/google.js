@@ -16,7 +16,7 @@ const GOOGLE_VOICE_MAP = {
 };
 
 function createGoogleProvider() {
-  const apiKey = process.env.GOOGLE_TTS_API_KEY;
+  const apiKey = String(process.env.GOOGLE_TTS_API_KEY || '').trim();
   if (!apiKey) {
     const err = new Error('GOOGLE_TTS_API_KEY is not configured');
     err.status = 503;

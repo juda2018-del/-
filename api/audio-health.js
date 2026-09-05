@@ -23,5 +23,10 @@ module.exports = async function handler(req, res) {
     maxTextChars: 12000,
     workflow: ['generate', 'preview', 'download', 'attach', 'publish'],
     note: 'Generate returns draft MP3 only. Publish is a separate admin action.',
+    // Deployment diagnostics only (never include secret values).
+    deployment: {
+      commit: process.env.VERCEL_GIT_COMMIT_SHA || null,
+      env: process.env.VERCEL_ENV || null,
+    },
   });
 };

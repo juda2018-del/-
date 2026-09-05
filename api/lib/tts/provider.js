@@ -10,10 +10,16 @@
 const { createOpenAIProvider } = require('./openai');
 const { createGoogleProvider } = require('./google');
 
+function envFlag(name) {
+  const value = process.env[name];
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
 function getConfiguredProviders() {
   const list = [];
-  if (process.env.OPENAI_API_KEY) list.push('openai');
-  if (process.env.GOOGLE_TTS_API_KEY) list.push('google');
+  // Read from environment only — never hardcode secrets.
+  if (envFlag('OPENAI_API_KEY')) list.push('openai');
+  if (envFlag('GOOGLE_TTS_API_KEY')) list.push('google');
   return list;
 }
 
