@@ -1,0 +1,107 @@
+From 2bed8df86cb83550999cbbb563d220e8c4b8de02 Mon Sep 17 00:00:00 2001
+From: Cursor Agent <cursoragent@cursor.com>
+Date: Sat, 5 Sep 2026 09:52:16 +0000
+Subject: [PATCH] fix: prefer canonical Firestore menu IDs on restaurant detail
+
+Legacy menu documents matched by Arabic restaurant name were shown
+alongside the live catalog, so add-to-cart failed while menuLive was true.
+Filter to canonical catalog IDs when present, and remove the obsolete
+mobile responsive auto-apply workflow that cannot decode its payloads.
+---
+ .../workflows/apply-mobile-responsive-fix.yml | 44 -------------------
+ .../DynamicRestaurantClient.tsx               | 21 ++++++---
+ 2 files changed, 14 insertions(+), 51 deletions(-)
+ delete mode 100644 .github/workflows/apply-mobile-responsive-fix.yml
+
+diff --git a/.github/workflows/apply-mobile-responsive-fix.yml b/.github/workflows/apply-mobile-responsive-fix.yml
+deleted file mode 100644
+index bb518a3..0000000
+--- a/.github/workflows/apply-mobile-responsive-fix.yml
++++ /dev/null
+@@ -1,44 +0,0 @@
+-name: Apply mobile responsive fix
+-
+-on:
+-  push:
+-    branches: [main]
+-    paths:
+-      - '.mobile-fix/**'
+-      - '.github/workflows/apply-mobile-responsive-fix.yml'
+-
+-permissions:
+-  contents: write
+-
+-jobs:
+-  apply-fix:
+-    runs-on: ubuntu-latest
+-    steps:
+-      - name: Checkout repository
+-        uses: actions/checkout@v4
+-        with:
+-          fetch-depth: 0
+-
+-      - name: Decode fixed files
+-        shell: bash
+-        run: |
+-          set -euo pipefail
+-          base64 -d .mobile-fix/app_page.tsx.gz.b64 | gzip -d > app/page.tsx
+-          base64 -d .mobile-fix/reels_page.tsx.gz.b64 | gzip -d > app/reels/page.tsx
+-          base64 -d .mobile-fix/restaurant_order_client.tsx.gz.b64 | gzip -d > app/restaurants/RestaurantOrderClient.tsx
+-          rm -rf .mobile-fix
+-          rm -f .github/workflows/apply-mobile-responsive-fix.yml
+-
+-      - name: Commit responsive fixes
+-        shell: bash
+-        run: |
+-          set -euo pipefail
+-          git config user.name "github-actions[bot]"
+-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+-          git add app/page.tsx app/reels/page.tsx app/restaurants/RestaurantOrderClient.tsx MOBILE_RESPONSIVE_FIX_AR.txt .mobile-fix .github/workflows/apply-mobile-responsive-fix.yml || true
+-          if git diff --cached --quiet; then
+-            echo "No changes to commit"
+-            exit 0
+-          fi
+-          git commit -m "Fix mobile responsive layouts"
+-          git push origin main
+diff --git a/app/restaurants/[restaurantId]/DynamicRestaurantClient.tsx b/app/restaurants/[restaurantId]/DynamicRestaurantClient.tsx
+index dcd9d1c..afd262c 100644
+--- a/app/restaurants/[restaurantId]/DynamicRestaurantClient.tsx
++++ b/app/restaurants/[restaurantId]/DynamicRestaurantClient.tsx
+@@ -118,7 +118,7 @@ export default function DynamicRestaurantClient({ restaurantId: restaurantIdProp
+       unsubscribeRestaurants();
+       unsubscribeMenu();
+     };
+-  }, []);
++  }, [restaurantId]);
+ 
+   useEffect(() => {
+     setCartCount(readFuseCart().reduce((sum, item) => sum + item.qty, 0));
+@@ -133,12 +133,19 @@ export default function DynamicRestaurantClient({ restaurantId: restaurantIdProp
+   }, [restaurantId, restaurants]);
+ 
+   const restaurantName = restaurant?.name || restaurant?.title || restaurant?.restaurantName || "المطعم";
+-  const items = useMemo(() => menu.filter((item) => {
+-    const sameRestaurant = item.restaurantId === restaurantId || item.restaurantId === restaurant?.documentId;
+-    const sameName = item.restaurantName === restaurantName || item.restaurant === restaurantName;
+-    const available = item.available !== false && item.isAvailable !== false;
+-    return available && (sameRestaurant || sameName);
+-  }), [menu, restaurant, restaurantId, restaurantName]);
++  // Prefer canonical catalog docs only. Legacy menu rows share Arabic restaurant
++  // names but use random IDs and break add-to-cart while menuLive stays true.
++  const items = useMemo(() => {
++    const filtered = menu.filter((item) => {
++      const sameRestaurant =
++        item.restaurantId === restaurantId || item.restaurantId === restaurant?.documentId;
++      const sameName = item.restaurantName === restaurantName || item.restaurant === restaurantName;
++      const available = item.available !== false && item.isAvailable !== false;
++      return available && (sameRestaurant || sameName);
++    });
++    const liveOnly = filtered.filter((item) => isCatalogMenuItemId(item.documentId));
++    return liveOnly.length ? liveOnly : filtered;
++  }, [menu, restaurant, restaurantId, restaurantName]);
+ 
+   function addItem(item: MenuDoc) {
+     if (!menuLive || !isCatalogMenuItemId(item.documentId)) {
+-- 
+2.43.0
+
