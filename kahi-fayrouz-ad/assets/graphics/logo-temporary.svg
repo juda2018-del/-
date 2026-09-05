@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Temporary Kahi Fayrouz mark">
+  <title>Temporary brand mark  not the official logo</title>
+  <defs>
+    <radialGradient id="g" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#24B2AA"/>
+      <stop offset="100%" stop-color="#0E7C7B"/>
+    </radialGradient>
+  </defs>
+  <circle cx="256" cy="256" r="220" fill="url(#g)"/>
+  <circle cx="256" cy="256" r="198" fill="none" stroke="#FFF6E8" stroke-width="8"/>
+  <path d="M150 280 C190 210, 320 210, 360 280" fill="none" stroke="#D4A017" stroke-width="14" stroke-linecap="round"/>
+  <path d="M170 300 C210 245, 300 245, 340 300" fill="none" stroke="#E8BA4A" stroke-width="10" stroke-linecap="round"/>
+  <path d="M190 318 C220 280, 290 280, 320 318" fill="none" stroke="#FFF6E8" stroke-width="8" stroke-linecap="round"/>
+  <ellipse cx="256" cy="188" rx="18" ry="22" fill="#FFF6E8"/>
+</svg>

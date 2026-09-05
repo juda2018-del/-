@@ -25,7 +25,8 @@
     "cap:sync": "npx cap sync",
     "cap:open:ios": "npx cap open ios",
     "cap:open:android": "npx cap open android",
-    "cap:copy": "npx cap copy"
+    "cap:copy": "npx cap copy",
+    "video:render": "python3 kahi-fayrouz-ad/scripts/render_all.py"
   },
   "dependencies": {
     "@capacitor/android": "^6.2.0",
