@@ -310,7 +310,9 @@ const defaultState = {
     storyId:'studio-test', episodeId:'studio-test-1', text:STUDIO_TEST_SCRIPT, narratorVoice:'onyx',
     roleVoices:{}, musicUrl:'', sfxRain:false, sfxDoor:false, sfxFootsteps:false,
     status:'idle', progress:'', error:'',
-    result:null
+    result:null,
+    ttsHealth:null,
+    ttsHealthStatus:''
   },
   schedule:[
     {time:'08:00 مساءً', title:'ليالي جزل', host:'ستوديو جزل', desc:'قصص قصيرة مختارة من جمهور جزل'},
@@ -723,9 +725,30 @@ function syncAudioStudioFromSelection(){
 function voiceSelectHtml(name, selected){
   return `<select name="${name}">${STUDIO_VOICES.map(v=>`<option value="${v}" ${v===selected?'selected':''}>${v}</option>`).join('')}</select>`;
 }
+function ensureStudioHealth(){
+  const studio=state.audioStudio || (state.audioStudio=structured(defaultState.audioStudio));
+  if(studio.ttsHealthStatus==='loading' || studio.ttsHealthStatus==='loaded') return;
+  studio.ttsHealthStatus='loading';
+  fetch('/api/audio-health',{cache:'no-store'}).then(r=>r.json()).then(j=>{
+    studio.ttsHealth={ok:!!j.ok, ttsConfigured:!!j.ttsConfigured, providers:Array.isArray(j.providers)?j.providers:[]};
+    studio.ttsHealthStatus='loaded';
+    render();
+  }).catch(()=>{
+    studio.ttsHealth={ok:false, ttsConfigured:false, providers:[]};
+    studio.ttsHealthStatus='loaded';
+    render();
+  });
+}
+function studioHealthNote(studio){
+  const health=studio.ttsHealth;
+  if(!health) return 'جاري فحص خدمة الصوت…';
+  if(health.ttsConfigured) return `TTS جاهز (${(health.providers||[]).join(', ')||'ok'})`;
+  return 'TTS غير مُعد على هذا السيرفر. أضف مفتاح التوليد في Vercel Production Environment Variables ثم أعد النشر.';
+}
 function audioStudioView(){
   if(!isAdmin()) return `<div class="admin-lock panel-card"><b>استوديو الصوت محمي</b><p class="muted">توليد الصوت للأدمن فقط عبر Firebase Admin Claim.</p></div>`;
   syncAudioStudioFromSelection();
+  ensureStudioHealth();
   const studio=state.audioStudio;
   const story=getStory(studio.storyId);
   const episodes=story?.episodeList||[];
@@ -733,7 +756,7 @@ function audioStudioView(){
   const busy=studio.status==='generating';
   const result=studio.result;
   const ep=episodes.find(e=>e.id===studio.episodeId);
-  return `<div class="panel-card"><b>Audio Studio · استوديو الصوت</b><p class="muted" style="margin:6px 0 0">أداة نشر داخلية فقط: تحويل نص الحلقة إلى ملف MP3 نهائي، ثم تنزيله/ربطه قبل النشر. لا يظهر أي TTS للمستخدم العام.</p><p class="muted tiny-note">Workflow: Generate → Preview → Download → Attach → Publish (منفصل)</p></div>
+  return `<div class="panel-card"><b>Audio Studio · استوديو الصوت</b><p class="muted" style="margin:6px 0 0">أداة نشر داخلية فقط: تحويل نص الحلقة إلى ملف MP3 نهائي، ثم تنزيله/ربطه قبل النشر. لا يظهر أي TTS للمستخدم العام.</p><p class="muted tiny-note">Workflow: Generate → Preview → Download → Attach → Publish (منفصل) · ${esc(studioHealthNote(studio))}</p></div>
   <form class="form-card" id="audioStudioForm">
     <h2 style="margin-top:0">إعداد الحلقة</h2>
     <div class="field"><label>القصة / Story</label><select name="storyId" id="studioStorySelect">${state.stories.map(s=>`<option value="${s.id}" ${s.id===studio.storyId?'selected':''}>${esc(s.title)}</option>`).join('')}</select></div>
@@ -820,6 +843,17 @@ async function generateStudioAudio(e){
   // Generate = draft only. Never flip story/episode published flags here.
   save(); render();
   try{
+    try{
+      const healthRes=await fetch('/api/audio-health',{cache:'no-store'});
+      const health=await healthRes.json();
+      state.audioStudio.ttsHealth={ok:!!health.ok, ttsConfigured:!!health.ttsConfigured, providers:Array.isArray(health.providers)?health.providers:[]};
+      state.audioStudio.ttsHealthStatus='loaded';
+      if(!health.ttsConfigured){
+        throw new Error('TTS غير مُعد على هذا السيرفر. أضف مفتاح التوليد في Vercel Production Environment Variables ثم أعد النشر.');
+      }
+    }catch(preflight){
+      if(preflight.message && preflight.message.includes('TTS غير مُعد')) throw preflight;
+    }
     const token=await getAdminIdToken();
     const sfxUrls=[];
     // Optional SFX only when a real HTTPS asset is configured (no placeholders).
