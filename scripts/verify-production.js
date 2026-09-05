@@ -78,6 +78,8 @@ async function checkAudioApi(label, url) {
 
     if (health.deployment?.commit) {
       console.log(`i ${label}: deployment commit ${String(health.deployment.commit).slice(0, 12)} env=${health.deployment.env || 'n/a'}`);
+    } else if (label === 'Production') {
+      console.log('⚠ Production API is stale vs current main (health has no deployment.commit). Redeploy JAZAL — not joda-os.');
     }
 
     // Auth/API contract must pass. TTS readiness is reported separately for FINAL READY.
